@@ -19,12 +19,21 @@ include $(WS_MAKE_RULES)/x11.mk
 
 COMPONENT_NAME= xf86-input-mouse
 COMPONENT_VERSION= 1.9.5
+COMPONENT_REVISION=	1
 COMPONENT_SUMMARY= xf86-input-mouse - Mouse input driver for the Xorg X server
 COMPONENT_FMRI= x11/server/xorg/driver/xorg-input-mouse
 COMPONENT_ARCHIVE_EXTENSION= .tar.xz
 COMPONENT_ARCHIVE_HASH= sha256:4fde8ae9b44352e2a208584c36528ee3ed13cf5fe4417208a9785daccefd9968
 
 include $(WS_MAKE_RULES)/common.mk
+
+# The VUID reader (vuidReadInput) runs in the X server's input thread; without
+# _REENTRANT, sun_mouse.c gets the global errno (it includes <errno.h> before
+# the server headers), sees the main thread's errno after read() fails with
+# EAGAIN, takes it for an error ("Read error: Error 0") and drops the
+# motion read in that pass: pointer stuck or jerky with Xorg 21.
+CPPFLAGS +=	-D_REENTRANT
+CONFIGURE_OPTIONS +=	CPPFLAGS="$(CPPFLAGS)"
 
 # Build dependencies
 REQUIRED_PACKAGES += x11/header/x11-protocols
