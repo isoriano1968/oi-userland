@@ -1,0 +1,43 @@
+drm-uapi/drm.h: _IOC() on illumos.
+
+src/util/os_drm.h builds DRM command ioctls with DRM_IOC(), which maps to
+_IOC(); illumos' <sys/ioccom.h> has no _IOC() ("implicit declaration of
+function '_IOC'"). Take the definition libdrm uses on illumos (OpenIndiana
+gfx-drm's include/drm/drm.h), so the numbers Mesa builds are the ones
+libdrm's DRM_IOWR() builds and the DRM drivers decode.
+
+--- include/drm-uapi/drm.h.orig	2026-11-11 13:28:58.426495344 +0100
++++ include/drm-uapi/drm.h	2026-11-11 13:28:58.566932991 +0100
+@@ -67,6 +67,32 @@
+ extern "C" {
+ #endif
+ 
++/*
++ * illumos: <sys/ioccom.h> has _IO(), _IOR(), _IOW() and _IOWR() but no
++ * _IOC(), which DRM_IOC() below uses.  The definition is libdrm's on
++ * illumos (OpenIndiana gfx-drm, include/drm/drm.h): the same command
++ * number as DRM_IOWR() for the same argument, with the size masked to
++ * IOCPARM_MASK as <sys/ioccom.h> does, so Mesa and libdrm encode every
++ * DRM ioctl alike.
++ */
++#if defined(__sun) && !defined(_IOC)
++#define _IOC_NRBITS	8
++#define _IOC_TYPEBITS	8
++#define _IOC_SIZEBITS	14
++#define _IOC_DIRBITS	2
++
++#define _IOC_NRSHIFT	0
++#define _IOC_TYPESHIFT	(_IOC_NRSHIFT + _IOC_NRBITS)
++#define _IOC_SIZESHIFT	(_IOC_TYPESHIFT + _IOC_TYPEBITS)
++#define _IOC_DIRSHIFT	(_IOC_SIZESHIFT + _IOC_SIZEBITS)
++
++#define _IOC(dir, type, nr, size) \
++	(((dir) /* already shifted */) | \
++	((type) << _IOC_TYPESHIFT) | \
++	((nr) << _IOC_NRSHIFT) | \
++	(((size) & IOCPARM_MASK) << _IOC_SIZESHIFT))
++#endif /* __sun */
++
+ #define DRM_NAME	"drm"	  /**< Name in kernel, /dev, and /proc */
+ #define DRM_MIN_ORDER	5	  /**< At least 2^5 bytes = 32 bytes */
+ #define DRM_MAX_ORDER	22	  /**< Up to 2^22 bytes = 4MB */

@@ -1,16 +1,18 @@
-$NetBSD: patch-src_util_libsync.h,v 1.1 2022/03/13 15:52:50 tnn Exp $
+libsync.h: <sys/ioccom.h> for _IOWR on illumos.
 
-sys/ioccom.h for _IOWR
+The sync_file ioctl numbers use _IOWR, which illumos defines in
+<sys/ioccom.h> and does not get through <sys/ioctl.h>. Same as the
+NetBSD/pkgsrc patch Mesa 21.3 carried on OpenIndiana. Upstreamable.
 
---- src/util/libsync.h.orig	2022-01-12 21:32:28.000000000 +0000
+--- src/util/libsync.h.orig
 +++ src/util/libsync.h
-@@ -34,6 +34,9 @@
- #include <stdint.h>
+@@ -36,6 +36,9 @@
  #include <string.h>
+ #include <sys/types.h>
  #include <sys/ioctl.h>
-+#ifdef __sun__
++#ifdef __sun
 +#include <sys/ioccom.h>
 +#endif
- #include <sys/poll.h>
  #include <unistd.h>
- 
+ #include <stdlib.h>
+ #include <time.h>

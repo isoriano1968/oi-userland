@@ -1,0 +1,36 @@
+Use pthread_getcpuclockid() only where the C library has it.
+
+util_thread_get_time_nano() called pthread_getcpuclockid() on every
+pthread platform except a hand-made list (Apple, Haiku, managarm). illumos
+has no pthread_getcpuclockid() either, so the build stopped with an
+implicit declaration. Detect the function in meson (with the thread
+dependency, as pthread_setaffinity_np is) and use it when it is there;
+elsewhere the function keeps returning 0, as it does on those platforms.
+Upstreamable.
+
+--- meson.build.orig	2026-11-11 12:59:10.013328493 +0100
++++ meson.build	2026-11-11 12:59:10.152082312 +0100
+@@ -1835,6 +1835,12 @@
+       args : '-D_GNU_SOURCE')
+     pre_args += '-DHAVE_PTHREAD_SETAFFINITY'
+   endif
++  if cc.has_function(
++      'pthread_getcpuclockid',
++      dependencies : dep_thread,
++      prefix : '#include <pthread.h>\n#include <time.h>')
++    pre_args += '-DHAVE_PTHREAD_GETCPUCLOCKID'
++  endif
+ endif
+ 
+ with_expat = get_option('expat') \
+--- src/util/u_thread.c.orig	2026-11-11 12:59:10.042739217 +0100
++++ src/util/u_thread.c	2026-11-11 12:59:10.152358715 +0100
+@@ -176,7 +176,7 @@
+ int64_t
+ util_thread_get_time_nano(thrd_t thread)
+ {
+-#if defined(HAVE_PTHREAD) && !defined(__APPLE__) && !defined(__HAIKU__) && !defined(__managarm__)
++#if defined(HAVE_PTHREAD_GETCPUCLOCKID)
+    struct timespec ts;
+    clockid_t cid;
+ 

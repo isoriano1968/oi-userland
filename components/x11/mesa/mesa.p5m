@@ -29,17 +29,11 @@ license mesa.license license='Mesa License (Mixed: MIT, LGPLv2, others)'
 <transform file path=usr/lib/xorg/modules/dri.* -> add pkg.linted.userland.action001.2 true>
 
 # For several libraries we create direct links
-link path=usr/X11/lib/mesa target=../../lib/mesa
-link path=usr/lib/GL/$(MACH64)/libglapi.so.0 target=libglapi.so.0.0.0
-link path=usr/lib/GL/$(MACH64)/libglapi.so target=libglapi.so.0
-link path=usr/lib/GL/$(MACH64)/libglapi.so.0.0.0 target=../../mesa/$(MACH64)/libglapi.so.0.0.0
+link path=usr/X11/lib/mesa target=../../lib/mesa pkg.tmp.allow-dangling=true
 
-link path=usr/lib/$(MACH64)/libGL.so.1 target=../GL/$(MACH64)/libGL.so.1  pkg.linted.userland.action002.0=true
-link path=usr/lib/$(MACH64)/libGL.so target=libGL.so.1
+link path=usr/lib/$(MACH64)/libGL.so.1 target=../GL/$(MACH64)/libGL.so.1  pkg.linted.userland.action002.0=true pkg.tmp.allow-dangling=true
+link path=usr/lib/$(MACH64)/libGL.so target=libGL.so.1 pkg.tmp.allow-dangling=true
 
-link path=usr/lib/$(MACH64)/libglapi.so.0 target=libglapi.so.0.0.0 
-link path=usr/lib/$(MACH64)/libglapi.so target=libglapi.so.0
-link path=usr/lib/$(MACH64)/libglapi.so.0.0.0 target=../GL/$(MACH64)/libglapi.so.0.0.0
 
 link path=usr/lib/GL/$(MACH64)/libgbm.so.1.0.0 target=../../mesa/$(MACH64)/libgbm.so.1.0.0
 link path=usr/lib/GL/$(MACH64)/libgbm.so target=libgbm.so.1.0.0
@@ -49,9 +43,6 @@ link path=usr/lib/$(MACH64)/libgbm.so target=libgbm.so.1.0.0
 link path=usr/lib/$(MACH64)/libgbm.so.1 target=libgbm.so.1.0.0
 
 # Compat links
-link path=usr/X11/lib/$(MACH64)/libglapi.so.0 target=libglapi.so.0.0.0 
-link path=usr/X11/lib/$(MACH64)/libglapi.so target=libglapi.so.0 
-link path=usr/X11/lib/$(MACH64)/libglapi.so.0.0.0 target=../GL/$(MACH64)/libglapi.so.0.0.0 pkg.linted.userland.action002.0=true
 
 # libGLU has moved to x11/library/glu 
 depend fmri=pkg:/x11/library/glu@9.0.0 type=require
@@ -69,12 +60,9 @@ link path=usr/lib/$(MACH64)/pkgconfig/gbm.pc target=../../mesa/$(MACH64)/pkgconf
 link path=usr/lib/$(MACH64)/pkgconfig/gl.pc target=../../mesa/$(MACH64)/pkgconfig/gl.pc
 link path=usr/lib/$(MACH64)/pkgconfig/glesv1_cm.pc target=../../mesa/$(MACH64)/pkgconfig/glesv1_cm.pc
 link path=usr/lib/$(MACH64)/pkgconfig/glesv2.pc target=../../mesa/$(MACH64)/pkgconfig/glesv2.pc
-link path=usr/lib/$(MACH64)/pkgconfig/osmesa.pc target=../../mesa/$(MACH64)/pkgconfig/osmesa.pc
-link path=usr/lib/$(MACH64)/pkgconfig/xatracker.pc target=../../mesa/$(MACH64)/pkgconfig/xatracker.pc
 
 file path=usr/include/EGL/egl.h
 file path=usr/include/EGL/eglext.h
-file path=usr/include/EGL/eglextchromium.h
 file path=usr/include/EGL/eglmesaext.h
 file path=usr/include/EGL/eglplatform.h
 file path=usr/include/GLES/egl.h
@@ -99,11 +87,6 @@ file path=usr/include/mesa/glx.h
 file path=usr/include/mesa/glxext.h
 file path=usr/include/mesa/internal/dri_interface.h
 link path=usr/include/GL/internal/dri_interface.h target=../../mesa/internal/dri_interface.h
-file path=usr/include/mesa/osmesa.h
-link path=usr/include/GL/osmesa.h target=../mesa/osmesa.h
-file path=usr/include/xa_composite.h
-file path=usr/include/xa_context.h
-file path=usr/include/xa_tracker.h
 link path=usr/lib/mesa/$(MACH64)/libEGL.so target=libEGL.so.1
 link path=usr/lib/mesa/$(MACH64)/libEGL.so.1 target=libEGL.so.1.0.0
 file path=usr/lib/mesa/$(MACH64)/libEGL.so.1.0.0
@@ -116,39 +99,27 @@ file path=usr/lib/mesa/$(MACH64)/libGLESv1_CM.so.1.1.0
 link path=usr/lib/mesa/$(MACH64)/libGLESv2.so target=libGLESv2.so.2
 link path=usr/lib/mesa/$(MACH64)/libGLESv2.so.2 target=libGLESv2.so.2.0.0
 file path=usr/lib/mesa/$(MACH64)/libGLESv2.so.2.0.0
-link path=usr/lib/mesa/$(MACH64)/libOSMesa.so target=libOSMesa.so.8
-link path=usr/lib/mesa/$(MACH64)/libOSMesa.so.8 target=libOSMesa.so.8.0.0
-file path=usr/lib/mesa/$(MACH64)/libOSMesa.so.8.0.0
-link path=usr/lib/mesa/$(MACH64)/libXvMCr600.so target=libXvMCr600.so.1.0.0
-link path=usr/lib/mesa/$(MACH64)/libXvMCr600.so.1 target=libXvMCr600.so.1.0.0
-link path=usr/lib/mesa/$(MACH64)/libXvMCr600.so.1.0 target=libXvMCr600.so.1.0.0
-file path=usr/lib/mesa/$(MACH64)/libXvMCr600.so.1.0.0
 link path=usr/lib/mesa/$(MACH64)/libgbm.so target=libgbm.so.1
 link path=usr/lib/mesa/$(MACH64)/libgbm.so.1 target=libgbm.so.1.0.0
 file path=usr/lib/mesa/$(MACH64)/libgbm.so.1.0.0
-link path=usr/lib/mesa/$(MACH64)/libglapi.so target=libglapi.so.0
-link path=usr/lib/mesa/$(MACH64)/libglapi.so.0 target=libglapi.so.0.0.0
-file path=usr/lib/mesa/$(MACH64)/libglapi.so.0.0.0
-link path=usr/lib/mesa/$(MACH64)/libxatracker.so target=libxatracker.so.2
-link path=usr/lib/mesa/$(MACH64)/libxatracker.so.2 target=libxatracker.so.2.5.0
-file path=usr/lib/mesa/$(MACH64)/libxatracker.so.2.5.0
 file path=usr/lib/mesa/$(MACH64)/pkgconfig/dri.pc
 file path=usr/lib/mesa/$(MACH64)/pkgconfig/egl.pc
 file path=usr/lib/mesa/$(MACH64)/pkgconfig/gbm.pc
 file path=usr/lib/mesa/$(MACH64)/pkgconfig/gl.pc
 file path=usr/lib/mesa/$(MACH64)/pkgconfig/glesv1_cm.pc
 file path=usr/lib/mesa/$(MACH64)/pkgconfig/glesv2.pc
-file path=usr/lib/mesa/$(MACH64)/pkgconfig/osmesa.pc
-file path=usr/lib/mesa/$(MACH64)/pkgconfig/xatracker.pc
-link path=usr/lib/mesa/$(MACH64)/vdpau/libvdpau_r600.so \
-    target=libvdpau_r600.so.1.0.0
-link path=usr/lib/mesa/$(MACH64)/vdpau/libvdpau_r600.so.1 \
-    target=libvdpau_r600.so.1.0.0
-link path=usr/lib/mesa/$(MACH64)/vdpau/libvdpau_r600.so.1.0 \
-    target=libvdpau_r600.so.1.0.0
-file path=usr/lib/mesa/$(MACH64)/vdpau/libvdpau_r600.so.1.0.0
-file path=usr/lib/xorg/modules/dri/$(MACH64)/i915_dri.so
-hardlink path=usr/lib/xorg/modules/dri/$(MACH64)/kms_swrast_dri.so target=i915_dri.so
-hardlink path=usr/lib/xorg/modules/dri/$(MACH64)/r600_dri.so target=i915_dri.so
-hardlink path=usr/lib/xorg/modules/dri/$(MACH64)/swrast_dri.so target=i915_dri.so
+link path=usr/lib/xorg/modules/dri/$(MACH64)/i915_dri.so target=libdril_dri.so
+link path=usr/lib/xorg/modules/dri/$(MACH64)/kms_swrast_dri.so target=libdril_dri.so
+link path=usr/lib/xorg/modules/dri/$(MACH64)/r600_dri.so target=libdril_dri.so
+link path=usr/lib/xorg/modules/dri/$(MACH64)/swrast_dri.so target=libdril_dri.so
 file path=usr/share/drirc.d/00-mesa-defaults.conf
+
+file path=usr/include/EGL/eglext_angle.h
+file path=usr/include/gbm_backend_abi.h
+file path=usr/lib/mesa/$(MACH64)/gbm/dri_gbm.so
+file path=usr/lib/mesa/$(MACH64)/libgallium-26.2.6.so
+file path=usr/lib/mesa/$(MACH64)/pkgconfig/glx.pc
+file path=usr/lib/xorg/modules/dri/$(MACH64)/libdril_dri.so
+file path=usr/share/drirc.d/00-r600-defaults.conf
+file path=usr/share/drirc.d/00-radeonsi-defaults.conf
+link path=usr/lib/xorg/modules/dri/$(MACH64)/radeonsi_dri.so target=libdril_dri.so

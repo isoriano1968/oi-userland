@@ -1,0 +1,63 @@
+Parse GLSL float literals in the C locale on illumos too.
+
+1. Use strtod_l()/strtof_l() whenever the platform has them, not only with
+   _GNU_SOURCE: illumos has them (meson finds HAVE_STRTOD_L), but Mesa
+   defines _GNU_SOURCE only on Linux, so _mesa_strtod()/_mesa_strtof() fell
+   back to plain strtod().
+2. Build the C locale with LC_NUMERIC_MASK, the category strtod uses.
+   newlocale(LC_CTYPE_MASK, "C", NULL) leaves LC_NUMERIC to the base; on
+   illumos a NULL base copies the process locale, so under
+   LC_NUMERIC=de_DE.UTF-8 strtof_l() still read 0.5 as 0.
+
+Symptom: in a session with a decimal-comma locale every float constant in
+a GLSL shader lost its fraction: GTK4 (ngl) drew no text or icons, mutter's
+X11 frames had empty title bars, Firefox WebRender drew wrong colours.
+Still present in Mesa 26.2.6 unchanged; upstreamable.
+
+--- src/util/strtod.c.orig	2026-11-11 12:46:24.065174145 +0100
++++ src/util/strtod.c	2026-11-11 12:46:24.128716983 +0100
+@@ -26,7 +26,7 @@
+ 
+ #include <stdlib.h>
+ 
+-#if defined(_GNU_SOURCE) && defined(HAVE_STRTOD_L)
++#if defined(HAVE_STRTOD_L)
+ #include <locale.h>
+ #ifdef HAVE_XLOCALE_H
+ #include <xlocale.h>
+@@ -36,7 +36,7 @@
+ #include "strtod.h"
+ #include "util/u_call_once.h"
+ 
+-#if defined(_GNU_SOURCE) && defined(HAVE_STRTOD_L)
++#if defined(HAVE_STRTOD_L)
+ 
+ static locale_t loc;
+ 
+@@ -49,7 +49,7 @@
+ static void
+ _mesa_locale_init_once(void)
+ {
+-   loc = newlocale(LC_CTYPE_MASK, "C", NULL);
++   loc = newlocale(LC_NUMERIC_MASK, "C", NULL);
+    atexit(_mesa_locale_fini);
+ }
+ 
+@@ -70,7 +70,7 @@
+ double
+ _mesa_strtod(const char *s, char **end)
+ {
+-#if defined(_GNU_SOURCE) && defined(HAVE_STRTOD_L)
++#if defined(HAVE_STRTOD_L)
+    return strtod_l(s, end, _mesa_get_locale());
+ #else
+    return strtod(s, end);
+@@ -85,7 +85,7 @@
+ float
+ _mesa_strtof(const char *s, char **end)
+ {
+-#if defined(_GNU_SOURCE) && defined(HAVE_STRTOD_L)
++#if defined(HAVE_STRTOD_L)
+    return strtof_l(s, end, _mesa_get_locale());
+ #elif defined(HAVE_STRTOF)
+    return strtof(s, end);

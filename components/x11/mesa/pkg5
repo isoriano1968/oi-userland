@@ -1,8 +1,14 @@
 {
     "dependencies": [
+        "compress/zstd",
+        "developer/clang-21",
         "library/expat",
         "library/graphics/libvdpau",
+        "library/python/mako-314",
+        "library/python/packaging-314",
+        "library/python/pyyaml-314",
         "library/zlib",
+        "runtime/clang-21",
         "service/opengl/ogl-select",
         "system/header/header-drm",
         "system/library",

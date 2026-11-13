@@ -1,0 +1,118 @@
+amd, radeonsi: include c99_alloca.h where alloca() is used.
+
+These files call alloca() and rely on <stdlib.h> declaring it, as glibc's
+does. illumos declares alloca() only in <alloca.h>, so they failed to
+build ("implicit declaration of function 'alloca'"). Mesa's own
+include/c99_alloca.h picks the right header per platform (<alloca.h> on
+__sun); include it, as the rest of Mesa does. Upstreamable.
+
+--- src/amd/common/ac_gpu_info.c.orig
++++ src/amd/common/ac_gpu_info.c
+@@ -10,6 +10,7 @@
+ #include "ac_surface.h"
+ #include "ac_linux_drm.h"
+ #include "util/u_sync_provider.h"
++#include "c99_alloca.h"
+ 
+ #include "addrlib/src/amdgpu_asic_addr.h"
+ #include "amd_family.h"
+--- src/amd/common/ac_linux_drm.c.orig
++++ src/amd/common/ac_linux_drm.c
+@@ -9,6 +9,7 @@
+ #include "util/u_math.h"
+ #include "util/u_sync_provider.h"
+ #include "ac_gpu_info.h"
++#include "c99_alloca.h"
+ 
+ #include <stdlib.h>
+ #include <time.h>
+--- src/amd/common/nir/ac_nir_lower_image_tex.c.orig
++++ src/amd/common/nir/ac_nir_lower_image_tex.c
+@@ -24,6 +24,7 @@
+ 
+ #include "ac_nir.h"
+ #include "nir_builder.h"
++#include "c99_alloca.h"
+ 
+ static void
+ replace_with_formatted_load_buffer_amd(nir_builder *b, nir_def *old_def, nir_deref_instr *deref,
+--- src/amd/compiler/aco_register_allocation.cpp.orig
++++ src/amd/compiler/aco_register_allocation.cpp
+@@ -5,6 +5,7 @@
+  */
+ 
+ #include "aco_ir.h"
++#include "c99_alloca.h"
+ 
+ #include "util/bitset.h"
+ #include "util/enum_operators.h"
+--- src/amd/compiler/instruction_selection/aco_select_nir_intrinsics.cpp.orig
++++ src/amd/compiler/instruction_selection/aco_select_nir_intrinsics.cpp
+@@ -8,6 +8,7 @@
+ #include "aco_builder.h"
+ #include "aco_instruction_selection.h"
+ #include "aco_ir.h"
++#include "c99_alloca.h"
+ 
+ #include "ac_descriptors.h"
+ #include "ac_nir.h"
+--- src/amd/compiler/instruction_selection/aco_select_nir.cpp.orig
++++ src/amd/compiler/instruction_selection/aco_select_nir.cpp
+@@ -9,6 +9,7 @@
+ #include "aco_instruction_selection.h"
+ #include "aco_ir.h"
+ #include "aco_nir_call_attribs.h"
++#include "c99_alloca.h"
+ 
+ #include "amdgfxregs.h"
+ #include <array>
+--- src/amd/llvm/ac_llvm_build.c.orig
++++ src/amd/llvm/ac_llvm_build.c
+@@ -17,6 +17,7 @@
+ #include "util/u_atomic.h"
+ #include <llvm-c/Core.h>
+ #include <llvm/Config/llvm-config.h>
++#include "c99_alloca.h"
+ 
+ #include <assert.h>
+ #include <stdio.h>
+--- src/gallium/drivers/radeonsi/gfx/si_debug_gfx_compute.c.orig
++++ src/gallium/drivers/radeonsi/gfx/si_debug_gfx_compute.c
+@@ -9,6 +9,7 @@
+ #include "si_pipe.h"
+ #include "util/u_log.h"
+ #include "util/u_memory.h"
++#include "c99_alloca.h"
+ 
+ DEBUG_GET_ONCE_OPTION(replace_shaders, "RADEON_REPLACE_SHADERS", NULL)
+ 
+--- src/gallium/drivers/radeonsi/gfx/si_shader_llvm_tess.c.orig
++++ src/gallium/drivers/radeonsi/gfx/si_shader_llvm_tess.c
+@@ -8,6 +8,7 @@
+ #include "si_shader_internal.h"
+ #include "si_shader_llvm.h"
+ #include "nir.h"
++#include "c99_alloca.h"
+ 
+ static LLVMValueRef si_nir_load_tcs_varyings(struct ac_shader_abi *abi, unsigned num_components,
+                                              unsigned bit_size, gl_varying_slot slot,
+--- src/gallium/drivers/radeonsi/gfx/si_sqtt.c.orig
++++ src/gallium/drivers/radeonsi/gfx/si_sqtt.c
+@@ -10,6 +10,7 @@
+ #include "amd_family.h"
+ #include "si_build_pm4.h"
+ #include "si_pipe.h"
++#include "c99_alloca.h"
+ 
+ #include "util/hash_table.h"
+ #include "util/u_debug.h"
+--- src/gallium/winsys/amdgpu/drm/amdgpu_cs.cpp.orig
++++ src/gallium/winsys/amdgpu/drm/amdgpu_cs.cpp
+@@ -13,6 +13,7 @@
+ #include "util/os_time.h"
+ #include <inttypes.h>
+ #include <stdio.h>
++#include "c99_alloca.h"
+ 
+ #include "amd/common/sid.h"
+ 

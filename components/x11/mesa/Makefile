@@ -15,15 +15,16 @@
 #
 
 BUILD_STYLE = meson
+# Mesa 26 needs Python >= 3.10 (mako, PyYAML, packaging) for its generators.
+PYTHON_VERSION = 3.14
 include ../../../make-rules/shared-macros.mk
 
 COMPONENT_NAME= mesa
-COMPONENT_VERSION= 21.3.9
-COMPONENT_REVISION= 3
+COMPONENT_VERSION= 26.2.6
 COMPONENT_SUMMARY= The Mesa 3-D Graphics Library
 COMPONENT_SRC= mesa-$(COMPONENT_VERSION)
 COMPONENT_ARCHIVE= mesa-$(COMPONENT_VERSION).tar.xz
-COMPONENT_ARCHIVE_HASH= sha256:91fe6f20339884e37a7c47bfba42fb1cd397512c9ed5ad423de369f047cd8b5c
+COMPONENT_ARCHIVE_HASH= sha256:b9436b3e1a8be76fbd4823dc884f90596ab7c6ac5e1867a305e66ffccfb31a92
 COMPONENT_ARCHIVE_URL= https://archive.mesa3d.org/$(COMPONENT_ARCHIVE)
 COMPONENT_PROJECT_URL = http://www.mesa3d.org/
 
@@ -45,29 +46,30 @@ X11_SERVERLIBS_DIR= /usr/lib/xorg
 
 CONFIGURE_OPTIONS += --libdir='lib/mesa/amd64'
 
-PKG_HARDLINKS += usr/lib/xorg/modules/dri/$(MACH64)/kms_swrast_dri.so
 
-# Command line options to GNU autoconf configure script
-CONFIGURE_OPTIONS += -Dgallium-drivers='swrast, i915, r600'
+# Mesa 26: i965 is gone (crocus drives Haswell and older Intel), osmesa,
+# xvmc and xa were removed upstream.  radeonsi (GCN: Tahiti in the Mac Pro
+# 2013 up to Navi) needs LLVM with the AMDGPU target: OpenIndiana's LLVM 21.
+# crocus needs mesa-clc (SPIRV-LLVM-Translator, not yet in OI): first build without it.
+CONFIGURE_OPTIONS += -Dgallium-drivers='softpipe,llvmpipe,i915,r600,radeonsi'
 CONFIGURE_OPTIONS += -Dvulkan-drivers=''
 CONFIGURE_OPTIONS += -Dgbm=enabled
-CONFIGURE_OPTIONS += -Dglvnd=false
+CONFIGURE_OPTIONS += -Dglvnd=disabled
 # Wayland currently requires linux specific socket options and epoll for events.
 CONFIGURE_OPTIONS += -Dplatforms='x11'
-# llvm is disabled due to requiring llvm 16 we do not have 16
-CONFIGURE_OPTIONS += -Dllvm=false
-CONFIGURE_OPTIONS += -Dglx='auto'
+CONFIGURE_OPTIONS += -Dllvm=enabled
+CONFIGURE_OPTIONS += -Dshared-llvm=enabled
+CONFIGURE_OPTIONS += -Dglx=dri
 CONFIGURE_OPTIONS += -Degl=enabled
 CONFIGURE_OPTIONS += -Dgles1=enabled
 CONFIGURE_OPTIONS += -Dgles2=enabled
-CONFIGURE_OPTIONS += -Dosmesa=true
-CONFIGURE_OPTIONS += -Dshared-glapi=enabled
-CONFIGURE_OPTIONS += -Dgallium-xvmc=enabled
-CONFIGURE_OPTIONS += -Dgallium-xa=enabled
-CONFIGURE_OPTIONS += -Ddri-drivers='i965'
-CONFIGURE_OPTIONS += -Dshader-cache=false
+CONFIGURE_OPTIONS += -Dshader-cache=enabled
+CONFIGURE_OPTIONS += -Dgallium-va=disabled
+CONFIGURE_OPTIONS += -Dvalgrind=disabled
+CONFIGURE_OPTIONS += -Dlibunwind=disabled
+CONFIGURE_OPTIONS += -Dlmsensors=disabled
+CONFIGURE_OPTIONS += -Dzstd=enabled
 CONFIGURE_OPTIONS += -Ddri-drivers-path='$(X11_SERVERMODS_DIR)/dri$(SERVERMOD_SUBDIR)'
-CONFIGURE_OPTIONS += -Delf-tls=false
 
 CFLAGS += $(XPG7MODE)
 CFLAGS += -Wno-incompatible-pointer-types -D_POSIX_PTHREAD_SEMANTICS
@@ -77,6 +79,9 @@ CPPFLAGS += -D__STDC_CONSTANT_MACROS -D__STDC_LIMIT_MACROS -Drestrict=__restrict
 # when lazy loading is used. Since we're unable to restructure third
 # party code at that level, we must instead disable lazy loading.
 LDFLAGS += -Wl,-znolazyload
+# libgallium (llvmpipe, radeonsi) links OpenIndiana LLVM 21, which lives in
+# /usr/clang/21/lib: give it the runpath to find libLLVM.so.21.1.
+LDFLAGS += -Wl,-R/usr/clang/21/lib
 LDFLAGS += -Wl,-z,rescan-now
 CFLAGS += -Wstack-protector -fdata-sections -fstack-protector-all
 LD_OPTIONS += -z ignore -lssp -lsocket -lnsl
@@ -86,14 +91,17 @@ CONFIGURE_ENV += PYTHON=$(PYTHON)
 CONFIGURE_ENV += CPPFLAGS="$(CPPFLAGS)"
 
 # Add RPATH to xorg lib directory where is libdrm.
+# meson install drops the libdrm runpath it got from pkg-config, so set the
+# runpath on every shared object Mesa installs: its own libraries, libdrm,
+# the GCC runtime and LLVM (libgallium links libLLVM.so.21.1).
+MESA_RUNPATH = /usr/lib/mesa/$(MACH64):/usr/lib/xorg/$(MACH64):$(GCC_LIBDIR):/usr/clang/21/lib
 
 COMPONENT_POST_INSTALL_ACTION.64 += \
-	for f in libgbm.so.1.0.0 libEGL.so.1.0.0 libGL.so.1.2.0 libxatracker.so.2.5.0 libXvMCr600.so.1.0.0 vdpau/libvdpau_r600.so.1.0.0; do \
-	elfedit -e "dyn:runpath /usr/lib/mesa/$(MACH64):/usr/lib/xorg/$(MACH64):$(GCC_LIBDIR)" \
-	  $(PROTOUSRLIBDIR)/mesa/$(MACH64)/$$f ; \
+	for f in `find $(PROTOUSRLIBDIR)/mesa/$(MACH64) \
+	    $(PROTOUSRLIBDIR)/xorg/modules/dri/$(MACH64) \
+	    -type f -name "*.so*"` ; do \
+		elfedit -e "dyn:runpath $(MESA_RUNPATH)" $$f || exit 1 ; \
 	done ; \
-	elfedit -e "dyn:runpath /usr/lib/mesa/$(MACH64):/usr/lib/xorg/$(MACH64):$(GCC_LIBDIR)" \
-	  $(PROTOUSRLIBDIR)/xorg/modules/dri/$(MACH64)/i915_dri.so ; \
 	mv $(PROTOUSRDIR)/include/GL $(PROTOUSRDIR)/include/mesa
 
 # Manually added build dependencies
@@ -106,6 +114,7 @@ REQUIRED_PACKAGES += library/graphics/libvdpau
 REQUIRED_PACKAGES += $(GCC_RUNTIME_PKG)
 REQUIRED_PACKAGES += $(GXX_RUNTIME_PKG)
 REQUIRED_PACKAGES += library/expat
+REQUIRED_PACKAGES += compress/zstd
 REQUIRED_PACKAGES += library/zlib
 REQUIRED_PACKAGES += service/opengl/ogl-select
 REQUIRED_PACKAGES += system/library
@@ -113,6 +122,11 @@ REQUIRED_PACKAGES += system/library/math
 REQUIRED_PACKAGES += x11/header/x11-protocols
 REQUIRED_PACKAGES += x11/library/glu
 REQUIRED_PACKAGES += x11/library/libdrm
+REQUIRED_PACKAGES += developer/clang-21
+REQUIRED_PACKAGES += runtime/clang-21
+REQUIRED_PACKAGES += library/python/mako-314
+REQUIRED_PACKAGES += library/python/packaging-314
+REQUIRED_PACKAGES += library/python/pyyaml-314
 REQUIRED_PACKAGES += x11/library/libx11
 REQUIRED_PACKAGES += x11/library/libxcb
 REQUIRED_PACKAGES += x11/library/libxext
