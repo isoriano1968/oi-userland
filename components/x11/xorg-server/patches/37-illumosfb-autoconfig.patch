@@ -9,12 +9,16 @@ Unknown BIOS capability retains vesa. Explicit Device sections are unchanged.
 Do not put vesa and illumosfb in the same fallback list: their PCI/framebuffer
 claims conflict before PreInit. This patch is specific to illumos.
 
+Ported to 21.1: the driver list is XF86MatchedDrivers (xf86AddMatchedDriver()).
+
+diff --git a/hw/xfree86/common/xf86AutoConfig.c b/hw/xfree86/common/xf86AutoConfig.c
+index a4d6148..1423013 100644
 --- a/hw/xfree86/common/xf86AutoConfig.c
 +++ b/hw/xfree86/common/xf86AutoConfig.c
-@@ -198,6 +198,91 @@
-     return ret == CONFIG_OK;
+@@ -160,6 +160,91 @@ FreeConfig(void)
+     FreeList(&builtinConfig, &builtinLines);
  }
-
+ 
 +#if defined(__sun) && (defined(__i386__) || defined(__amd64__))
 +/*
 + * Return 1 for an initialized legacy video BIOS, 0 for its absence, and -1
@@ -101,31 +105,30 @@ claims conflict before PreInit. This patch is specific to illumos.
 +#endif
 +
  static void
- listPossibleVideoDrivers(char *matches[], int nmatches)
+ AppendToConfig(const char *s)
  {
-@@ -278,6 +363,25 @@
-
- #if defined(__linux__)
-     matches[i++] = xnfstrdup("modesetting");
-+#endif
-+
+@@ -282,6 +367,24 @@ listPossibleVideoDrivers(XF86MatchedDrivers *md)
+     xf86AddMatchedDriver(md, "modesetting");
+ #endif
+ 
 +#if defined(__sun) && (defined(__i386__) || defined(__amd64__))
 +    if (sunUseIllumosFb()) {
 +        int j, k;
 +
-+        for (j = k = 0; j < i; j++) {
-+            if (strcmp(matches[j], "vesa") == 0)
-+                free(matches[j]);
++        for (j = k = 0; j < md->nmatches; j++) {
++            if (strcmp(md->matches[j], "vesa") == 0)
++                free(md->matches[j]);
 +            else
-+                matches[k++] = matches[j];
++                md->matches[k++] = md->matches[j];
 +        }
-+        for (j = k; j < i; j++)
-+            matches[j] = NULL;
-+        i = k;
-+        if (i < (nmatches - 1))
-+            matches[i++] = xnfstrdup("illumosfb");
++        for (j = k; j < md->nmatches; j++)
++            md->matches[j] = NULL;
++        md->nmatches = k;
++        xf86AddMatchedDriver(md, "illumosfb");
 +        return;
 +    }
- #endif
-
++#endif
++
  #if !defined(__sun)
+     /* Fallback to platform default frame buffer driver */
+ #if !defined(__linux__) && defined(__sparc__)

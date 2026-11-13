@@ -1,14 +1,18 @@
---- a/hw/xfree86/os-support/solaris/sun_init.c	Fri Jun  5 12:41:14 2015
-+++ b/hw/xfree86/os-support/solaris/sun_init.c	Fri Jun  5 12:48:06 2015
-@@ -2,6 +2,7 @@
+Solaris sparc specific patch
+
+not suitable for upstream
+
+--- xorg-server-21.1.20/hw/xfree86/os-support/solaris/sun_init.c
++++ xorg-server-21.1.20/hw/xfree86/os-support/solaris/sun_init.c
+@@ -2,6 +2,7 @@ /*
   * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany
   * Copyright 1993 by David Wexelblat <dwex@goblin.org>
   * Copyright 1999 by David Holland <davidh@iquest.net>
-+ * Copyright (c) 2013 Oracle and/or its affiliates. All Rights Reserved.
++ * Copyright (c) 2013, Oracle and/or its affiliates. All Rights Reserved.
   *
   * Permission to use, copy, modify, distribute, and sell this software and its
   * documentation for any purpose is hereby granted without fee, provided that
-@@ -64,6 +65,11 @@
+@@ -69,6 +70,11 @@ /* Set by -dev argument on CLI
     Used by hw/xfree86/common/xf86AutoConfig.c for VIS_GETIDENTIFIER */
  _X_HIDDEN char xf86SolarisFbDev[PATH_MAX] = "/dev/fb";
  
@@ -20,7 +24,7 @@
  static void
  switch_to(int vt, const char *from)
  {
-@@ -97,6 +103,16 @@
+@@ -102,6 +108,16 @@ /* Check if we're run with euid==0 */
          if (geteuid() != 0)
              FatalError("xf86OpenConsole: Server must be suid root\n");
  
@@ -37,7 +41,7 @@
  #ifdef HAS_USL_VTS
  
          /*
-@@ -376,6 +392,9 @@
+@@ -381,6 +397,9 @@ #endif                          /* HAS_U
      if ((i + 1) < argc) {
          if (!strcmp(argv[i], "-dev")) {
              strlcpy(xf86SolarisFbDev, argv[i + 1], sizeof(xf86SolarisFbDev));
@@ -47,7 +51,7 @@
              return 2;
          }
      }
-@@ -383,6 +402,87 @@
+@@ -388,6 +407,87 @@ }
      return 0;
  }
  
@@ -122,9 +126,9 @@
 +                }
 +            }
 +        }
-+        if (found) {
-+            strcpy(xf86SolarisFbDev, "/devices");
-+            strcat(xf86SolarisFbDev, DEV_PATH(pPci));
++        if (found && (DEV_PATH(pPci) != NULL)) {
++            snprintf(xf86SolarisFbDev, sizeof(xf86SolarisFbDev), "/devices%s",
++                    DEV_PATH(pPci));
 +            xf86Msg(X_INFO, "Got xf86SolarisFbDev From Probe: %s\n", xf86SolarisFbDev);
 +        }
 +

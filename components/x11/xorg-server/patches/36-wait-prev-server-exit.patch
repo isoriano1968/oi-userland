@@ -1,0 +1,25 @@
+30686494 The login screen does not appear after logging out of GNOME3 on local display of T5-2
+
+If the previous instance is still running do a timed
+wait for it to exit.
+
+--- xorg-server-21.1.22/os/utils.c
++++ xorg-server-21.1.22/os/utils.c
+@@ -363,6 +363,17 @@ * Now try to kill the PID to see if it e
+              */
+             errno = 0;
+             t = kill(l_pid, 0);
++            if (t == 0) {
++                /*
++                 * Process is still active, wait a bit in case
++                 * it is still closing down.
++                 */
++                int count = 5;
++                while (t == 0 && count-- != 0) {
++                    sleep(1);
++                    t = kill(l_pid, 0);
++                }
++            }
+             if ((t < 0) && (errno == ESRCH)) {
+                 /*
+                  * Stale lock file.

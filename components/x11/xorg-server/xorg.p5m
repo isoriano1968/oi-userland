@@ -26,11 +26,12 @@ license $(COMPONENT_LICENSE_FILE) license='$(COMPONENT_LICENSE)'
 <transform file -> add pkg.depend.bypass-generate libGL\.so\.1>
 
 file config/x11-input.fdi path=etc/hal/fdi/preprobe/10osvendor/10-x11-input.fdi
-file hw/xfree86/man/xorgcfg.1 path=usr/share/man/man1/xorgcfg.1
-file hw/xfree86/man/xorgconfig.1 path=usr/share/man/man1/xorgconfig.1
+file files/xorgcfg.1 path=usr/share/man/man1/xorgcfg.1
+file files/xorgconfig.1 path=usr/share/man/man1/xorgconfig.1
 
 dir path=etc/X11/xorg.conf.d
 dir path=etc/X11/xorg.conf.avail
+dir path=usr/include/xorg
 file files/90-zap.conf path=etc/X11/xorg.conf.avail/90-zap.conf
 
 # this file is made from installed xorg-server.h by 
@@ -40,7 +41,8 @@ file files/xorg-server.h path=usr/include/xorg/xorg-server.h
 link path=usr/X11/bin/Xorg target=../../bin/Xorg
 #link path=usr/X11/bin/cvt target=../../bin/cvt
 link path=usr/X11/bin/gtf target=../../bin/gtf
-link path=usr/X11/include/xorg target=../../include/xorg
+# TODO (Xorg 21.1 PR): pkgdepend cannot resolve this /usr/X11 compatibility link to a directory
+#link path=usr/X11/include/xorg target=../../include/xorg
 
 file build/$(MACH64)/xorg-server.pc path=usr/lib/$(MACH64)/pkgconfig/xorg-server.pc
 
@@ -65,9 +67,6 @@ depend type=group fmri=x11/server/xorg/driver/xorg-input-mouse
 file path=usr/bin/Xorg mode=4555
 #file path=usr/bin/cvt
 file path=usr/bin/gtf
-file path=usr/include/xorg/BT.h
-file path=usr/include/xorg/IBM.h
-file path=usr/include/xorg/TI.h
 file path=usr/include/xorg/XIstubs.h
 file path=usr/include/xorg/Xprintf.h
 file path=usr/include/xorg/callback.h
@@ -169,7 +168,6 @@ file path=usr/include/xorg/servermd.h
 file path=usr/include/xorg/shadow.h
 file path=usr/include/xorg/shadowfb.h
 file path=usr/include/xorg/shmint.h
-file path=usr/include/xorg/site.h
 file path=usr/include/xorg/solaris-amd64.il variant.arch=i386
 file path=usr/include/xorg/syncsdk.h
 file path=usr/include/xorg/validate.h
@@ -187,7 +185,11 @@ file path=usr/include/xorg/xf86Crtc.h
 file path=usr/include/xorg/xf86Cursor.h
 file path=usr/include/xorg/xf86DDC.h
 file path=usr/include/xorg/xf86Modes.h
+file path=usr/include/xorg/glamor.h
+file path=usr/include/xorg/glxvndabi.h
+file path=usr/include/xorg/vndserver.h
 file path=usr/include/xorg/xf86Module.h
+file path=usr/include/xorg/xf86MatchDrivers.h
 file path=usr/include/xorg/xf86Opt.h
 file path=usr/include/xorg/xf86Optionstr.h
 file path=usr/include/xorg/xf86Optrec.h
@@ -196,7 +198,6 @@ file path=usr/include/xorg/xf86Pci.h
 file path=usr/include/xorg/xf86PciInfo.h
 file path=usr/include/xorg/xf86Priv.h
 file path=usr/include/xorg/xf86Privstr.h
-file path=usr/include/xorg/xf86RamDac.h
 file path=usr/include/xorg/xf86RandR12.h
 file path=usr/include/xorg/xf86VGAarbiter.h
 file path=usr/include/xorg/xf86Xinput.h
@@ -226,12 +227,11 @@ file path=usr/include/xorg/xvmcext.h
 file usr/lib/xorg/modules/$(MACH64)/drivers/modesetting_drv.so path=usr/lib/xorg/modules/drivers/$(MACH64)/modesetting_drv.so
 file usr/lib/xorg/modules/$(MACH64)/extensions/libglx.so path=usr/lib/mesa/modules/extensions/$(MACH64)/libglx.so
 file path=usr/lib/xorg/modules/$(MACH64)/libexa.so
-file path=usr/lib/xorg/modules/$(MACH64)/libfb.so
 file path=usr/lib/xorg/modules/$(MACH64)/libfbdevhw.so
+file path=usr/lib/xorg/modules/$(MACH64)/libglamoregl.so
 file path=usr/lib/xorg/modules/$(MACH64)/libint10.so
 file path=usr/lib/xorg/modules/$(MACH64)/libshadow.so
 file path=usr/lib/xorg/modules/$(MACH64)/libshadowfb.so
-file path=usr/lib/xorg/modules/$(MACH64)/libvbe.so
 file path=usr/lib/xorg/modules/$(MACH64)/libvgahw.so
 file path=usr/lib/xorg/modules/$(MACH64)/libwfb.so
 file path=usr/share/aclocal/xorg-server.m4
@@ -248,3 +248,4 @@ file path=usr/share/man/man4/modesetting.4
 file path=usr/share/man/man5/xorg.conf.5
 file path=usr/share/man/man5/xorg.conf.d.5
 #file path=var/run/xkb/README.compiled
+link path=usr/lib/mdb/proc/$(MACH64)/Xorg.so target=Xserver.so

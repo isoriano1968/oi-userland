@@ -18,15 +18,14 @@ include ../../../make-rules/shared-macros.mk
 include $(WS_MAKE_RULES)/x11.mk
 
 COMPONENT_NAME=         xorg-server
-COMPONENT_VERSION=      1.19.7
-COMPONENT_REVISION=     18
+COMPONENT_VERSION=      21.1.25
 COMPONENT_SUMMARY=      Xorg - X11R7 X server
 COMPONENT_SRC=          $(COMPONENT_NAME)-$(COMPONENT_VERSION)
-COMPONENT_ARCHIVE=      $(COMPONENT_SRC).tar.bz2
+COMPONENT_ARCHIVE=      $(COMPONENT_SRC).tar.xz
 COMPONENT_ARCHIVE_HASH= \
-	sha256:7112f7128a4f5b06ceb8bba1bdc5e5c9e0fae682a42d35218bc12ba693f4c80c
+	sha256:6ad4e3c7b59a309b32c92e5c15ce1267110f9e13f1ac78da62361a628da1a0eb
 COMPONENT_ARCHIVE_URL=  \
-	https://ftp.x.org/pub/individual/xserver/$(COMPONENT_ARCHIVE)
+	https://www.x.org/releases/individual/xserver/$(COMPONENT_ARCHIVE)
 COMPONENT_PROJECT_URL=  https://www.x.org/
 COMPONENT_CLASSIFICATION=System/X11
 COMPONENT_LICENSE_FILE= COPYING
@@ -85,12 +84,10 @@ CONFIGURE_OPTIONS += --disable-unit-tests
 CONFIGURE_OPTIONS += --disable-xwin
 CONFIGURE_OPTIONS += --disable-xnest
 CONFIGURE_OPTIONS += --disable-systemd-logind
-CONFIGURE_OPTIONS += --disable-input-thread
-CONFIGURE_OPTIONS += --enable-dmx
 CONFIGURE_OPTIONS += --enable-dri
 CONFIGURE_OPTIONS += --enable-dri2
 CONFIGURE_OPTIONS += --enable-dri3
-CONFIGURE_OPTIONS += --disable-glamor
+CONFIGURE_OPTIONS += --enable-glamor
 CONFIGURE_OPTIONS += --enable-glx
 CONFIGURE_OPTIONS += --enable-kdrive
 CONFIGURE_OPTIONS += --enable-shared
@@ -118,9 +115,57 @@ CONFIGURE_ENV += XSERVERCFLAGS_CFLAGS="-DHAS_FCHOWN -DHAS_STICKY_DIR_BIT -D_REEN
 
 COMPONENT_BUILD_ENV += SERVERMOD_SUBDIR="$(X11_SERVERMOD_SUBDIR)"
 
-COMPONENT_POST_BUILD_ACTION += ( $(ENV) $(COMPONENT_BUILD_ENV) $(CONFIGURE_ENV) $(MAKE) -C $(BUILD_DIR_$(BITS))/os/solaris/mdb )
-COMPONENT_POST_INSTALL_ACTION += ( $(ENV) $(COMPONENT_BUILD_ENV) $(CONFIGURE_ENV) $(MAKE) $(COMPONENT_INSTALL_ARGS) \
-			-C $(BUILD_DIR_$(BITS))/os/solaris/mdb install )
+# The X server's mdb module (sources from Oracle's solaris-userland,
+# sun-src/os/solaris/mdb, copied in by srcs/): built from the configured
+# tree, installed with links for each server, as in solaris-userland.
+MDB_SOURCE_DIR = $(SOURCE_DIR)/os/solaris/mdb
+MDB_BUILD_DIR  = $(BUILD_DIR_64)/os/solaris/mdb
+MDB_MODULE_DIR = /usr/lib/mdb/proc/$(MACH64)
+MDB_SCRIPT_DIR = /usr/demo/Xserver/mdb
+MDB_SCRIPTS = list_Xserver_clients \
+	list_Xserver_devicegrab_client \
+	list_Xserver_servergrab_client
+MDB_MODULE_NAMES = Xephyr Xorg Xvfb
+BUILT_MDB_MODULE = $(MDB_BUILD_DIR)/modules/Xserver.so
+INSTALLED_MDB_LINKS = $(MDB_MODULE_NAMES:%=$(PROTO_DIR)$(MDB_MODULE_DIR)/%.so)
+INSTALLED_MDB_MODULE = $(PROTO_DIR)$(MDB_MODULE_DIR)/Xserver.so
+INSTALLED_MDB_README = $(PROTO_DIR)$(MDB_SCRIPT_DIR)/README
+INSTALLED_MDB_SCRIPTS = $(MDB_SCRIPTS:%=$(PROTO_DIR)$(MDB_SCRIPT_DIR)/%)
+INSTALLED_MDB_ALL = $(INSTALLED_MDB_MODULE) $(INSTALLED_MDB_LINKS) \
+	$(INSTALLED_MDB_README) $(INSTALLED_MDB_SCRIPTS)
+MDB_BUILD_ENV  = $(CONFIGURE_ENV) $(COMPONENT_BUILD_ENV)
+MDB_BUILD_ENV += ARCHLIBSUBDIR="/$(MACH64)"
+MDB_BUILD_ENV += top_builddir="$(BUILD_DIR_64)"
+MDB_BUILD_ENV += top_srcdir="$(SOURCE_DIR)"
+
+# The mdb rules run outside the per-bitness builds: give them BITS (CC,
+# CFLAGS -m$(BITS)).
+$(BUILT_MDB_MODULE) $(INSTALLED_MDB_ALL): BITS = 64
+
+build: $(BUILT_MDB_MODULE)
+
+$(BUILT_MDB_MODULE): $(BUILD_DIR_64)/.built
+	$(RM) -r $(MDB_BUILD_DIR) ; $(MKDIR) $(MDB_BUILD_DIR)
+	$(CP) -r $(MDB_SOURCE_DIR)/. $(MDB_BUILD_DIR)/
+	cd $(MDB_BUILD_DIR)/modules && $(ENV) $(MDB_BUILD_ENV) $(MAKE) all
+
+install: $(INSTALLED_MDB_ALL)
+
+$(INSTALLED_MDB_MODULE): $(BUILT_MDB_MODULE) $(BUILD_DIR_64)/.installed
+	$(MKDIR) $(PROTO_DIR)$(MDB_MODULE_DIR)
+	$(INSTALL) -m 0555 $(BUILT_MDB_MODULE) $@
+
+$(INSTALLED_MDB_LINKS): $(INSTALLED_MDB_MODULE)
+	$(RM) $@
+	$(SYMLINK) Xserver.so $@
+
+$(INSTALLED_MDB_SCRIPTS): $(INSTALLED_MDB_MODULE)
+	$(MKDIR) $(PROTO_DIR)$(MDB_SCRIPT_DIR)
+	$(INSTALL) -m 0555 $(MDB_SOURCE_DIR)/scripts/$(@F) $@
+
+$(INSTALLED_MDB_README): $(INSTALLED_MDB_MODULE)
+	$(MKDIR) $(PROTO_DIR)$(MDB_SCRIPT_DIR)
+	$(INSTALL) -m 0444 $(MDB_SOURCE_DIR)/README $@
 
 # Build dependencies
 REQUIRED_PACKAGES += x11/documentation/xorg-docs
@@ -172,3 +217,6 @@ REQUIRED_PACKAGES += x11/library/xcb-util-image
 REQUIRED_PACKAGES += x11/library/xcb-util-keysyms
 REQUIRED_PACKAGES += x11/library/xcb-util-renderutil
 REQUIRED_PACKAGES += x11/library/xcb-util-wm
+REQUIRED_PACKAGES += x11/library/libepoxy
+REQUIRED_PACKAGES += x11/library/libxcvt
+REQUIRED_PACKAGES += x11/library/mesa

@@ -1,0 +1,33 @@
+Solaris specific patch
+
+not suitable for upstream
+
+--- xorg-server-21.1.20/os/utils.c
++++ xorg-server-21.1.20/os/utils.c
+@@ -559,8 +559,10 @@ #ifdef RLIMIT_STACK
+     ErrorF("-ls int                limit stack space to N Kb\n");
+ #endif
+ #ifdef LOCK_SERVER
++#ifndef SUNSOFT /* Not in Sun version as required by PSARC 2004/187 TCR */
+     ErrorF("-nolock                disable the locking mechanism\n");
+ #endif
++#endif
+     ErrorF("-maxclients n          set maximum number of clients (power of two)\n");
+     ErrorF("-nolisten string       don't listen on protocol\n");
+     ErrorF("-listen string         listen on protocol\n");
+@@ -857,6 +859,7 @@ UseMsg();
+         }
+ #endif
+ #ifdef LOCK_SERVER
++#ifndef SUNSOFT /* Not in Sun version as required by PSARC 2004/187 TCR */
+         else if (strcmp(argv[i], "-nolock") == 0) {
+ #if !defined(WIN32) && !defined(__CYGWIN__)
+             if (getuid() != 0)
+@@ -867,6 +870,7 @@ #endif
+                 nolock = TRUE;
+         }
+ #endif
++#endif
+ 	else if ( strcmp( argv[i], "-maxclients") == 0)
+ 	{
+ 	    if (++i < argc) {

@@ -1,6 +1,11 @@
---- a/dix/main.c	2017-02-01 15:05:08.248943479 -0800
-+++ b/dix/main.c	2017-02-01 15:07:26.499207921 -0800
-@@ -78,6 +78,8 @@
+Solaris specific patch
+
+not suitable for upstream
+
+
+--- xorg-server-21.1.20/dix/main.c
++++ xorg-server-21.1.20/dix/main.c
+@@ -78,6 +78,8 @@ #include <dix-config.h>
  #include <version-config.h>
  #endif
  
@@ -9,7 +14,7 @@
  #include <X11/X.h>
  #include <X11/Xos.h>            /* for unistd.h  */
  #include <X11/Xproto.h>
-@@ -125,6 +127,36 @@
+@@ -124,6 +126,34 @@ #endif /* SUNSOFT */
  
  extern void Dispatch(void);
  
@@ -24,10 +29,8 @@
 + * actually auth file.
 +*/
 +static void
-+SetupXauthFile(char *filename)
++SetupXauthFile(const char *filename)
 +{
-+        struct stat buf;
-+
 +        snprintf(sym_authfile, 40, LOCK_PREFIX "%s", display);
 +
 +        mkdir(LOCK_PREFIX, S_IRWXU);
@@ -46,17 +49,18 @@
  CallbackListPtr RootWindowFinalizeCallback = NULL;
  
  int
-@@ -132,6 +164,9 @@
- {
+@@ -132,6 +162,10 @@ {
      int i;
      HWEventQueueType alwaysCheckForInput[2];
-+#if defined(sun)
-+    char *xauthfile = NULL;
-+#endif
  
++#if defined(sun)
++    const char *xauthfile = NULL;
++#endif
++
      display = "0";
  
-@@ -145,6 +180,12 @@
+     InitRegions();
+@@ -142,6 +176,12 @@ CheckUserAuthorization();
  
      ProcessCommandLine(argc, argv);
  
@@ -69,9 +73,9 @@
      alwaysCheckForInput[0] = 0;
      alwaysCheckForInput[1] = 1;
      while (1) {
---- a/hw/xfree86/os-support/solaris/sun_init.c	2017-02-01 15:07:50.575551326 -0800
-+++ b/hw/xfree86/os-support/solaris/sun_init.c	2017-02-01 15:08:25.999117101 -0800
-@@ -46,6 +46,9 @@
+--- xorg-server-21.1.20/hw/xfree86/os-support/solaris/sun_init.c
++++ xorg-server-21.1.20/hw/xfree86/os-support/solaris/sun_init.c
+@@ -50,6 +50,9 @@ */
  #define	CONSOLE_VTNO	1
  #define	SOL_CONSOLE_DEV	"/dev/console"
  
@@ -81,19 +85,19 @@
  static Bool KeepTty = FALSE;
  static Bool UseConsole = FALSE;
  
-@@ -232,6 +235,8 @@
+@@ -221,6 +224,8 @@ FatalError("xf86OpenConsole: VT_SETMODE
  
              if (ioctl(xf86Info.consoleFd, VT_SETDISPINFO, atoi(display)) < 0)
                  xf86Msg(X_WARNING, "xf86OpenConsole: VT_SETDISPINFO failed\n");
 +
-+	    xf86ConsoleFd = xf86Info.consoleFd;
++            xf86ConsoleFd = xf86Info.consoleFd;
          }
  #endif
  
---- a/os/log.c	2017-02-01 15:08:49.899272429 -0800
-+++ b/os/log.c	2017-02-01 15:09:43.768274981 -0800
-@@ -108,6 +108,10 @@
- void (*OsVendorVErrorFProc) (const char *, va_list args) = NULL;
+--- xorg-server-21.1.20/os/log.c
++++ xorg-server-21.1.20/os/log.c
+@@ -115,6 +115,10 @@ #ifndef DEFAULT_LOG_FILE_VERBOSITY
+ #define DEFAULT_LOG_FILE_VERBOSITY	3
  #endif
  
 +#ifdef sun
@@ -103,7 +107,7 @@
  static FILE *logFile = NULL;
  static int logFileFd = -1;
  static Bool logFlush = FALSE;
-@@ -1007,6 +1011,9 @@
+@@ -1009,6 +1013,9 @@ #endif
      VErrorFSigSafe(f, args);
      va_end(args);
      ErrorFSigSafe("\n");

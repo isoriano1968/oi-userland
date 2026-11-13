@@ -1,4 +1,5 @@
-# Copyright (c) 2010, Oracle and/or its affiliates. All rights reserved.
+#
+# Copyright (c) 2010, 2018, Oracle and/or its affiliates. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -21,16 +22,26 @@
 #
 
 MODULES=Xserver.so
-MDB_MODULE_DIR=/usr/lib/mdb/proc/$(ARCHLIBSUBDIR)
+MDB_MODULE_DIR=/usr/lib/mdb/proc$(ARCHLIBSUBDIR)
 
-CFLAGS += -fPIC -DPIC -g
-CPPFLAGS += -I ../../../../include -I ../../../.. -I ../../../../Xext -I/usr/include/pixman-1
-LDFLAGS += -Wl,-z,text -Wl,-Mmapfile
+COMPILER_1 = $(CC:%/cc=cc)
+COMPILER = $(COMPILER_1:%/gcc=gcc)
+
+CFLAGS.cc = -K pic
+CFLAGS.gcc = -fpic
+CFLAGS += $(CFLAGS.$(COMPILER))
+CPPFLAGS += -I $(top_srcdir)/include -I $(top_srcdir) -I $(top_srcdir)/Xext
+CPPFLAGS += -I $(top_builddir)/include
+LDFLAGS += -Wl,-z,direct -Wl,-z,text -Wl,-M,mapfile -lc
+# illumos ld has no -z parent= (Solaris 11): the module is loaded by mdb either way
+SO_FLAG.cc = -G
+SO_FLAG.gcc = -shared
+SO_FLAG = $(SO_FLAG.$(COMPILER))
 
 HEADERS = Xserver_mdb.h
 SOURCES = Xserver_clients.c Xserver_device_grabs.c mdb_module.c
 OBJECTS = $(SOURCES:%.c=%.o)
-LINTFILES = $(SOURCES:%.so=%.ln)
+LINTFILES = $(SOURCES:%.c=%.ln)
 
 all: $(MODULES)
 
@@ -40,11 +51,10 @@ all: $(MODULES)
 .PARALLEL: $(OBJECTS) $(LINTFILES)
 
 Xserver.so: $(OBJECTS)
-	$(CC) $(CFLAGS) -shared -o Xserver.so $(OBJECTS) $(LDFLAGS) $(LIBS)
+	$(CC) $(SO_FLAG) $(CFLAGS) -o Xserver.so $(OBJECTS) $(LDFLAGS) $(LIBS)
 
-install: Xserver.so
-	mkdir -p $(DESTDIR)$(MDB_MODULE_DIR)$(SERVERMOD_SUBDIR)
-	cp Xserver.so $(DESTDIR)$(MDB_MODULE_DIR)$(SERVERMOD_SUBDIR)
+install:
+	mkdir $(DESTDIR)$(MDB_MODULE_DIR)
 
 clean:
 	rm -f $(OBJECTS)
@@ -59,3 +69,6 @@ clobber: clean clean.lint
 	$(LINT) $(LINTFLAGS) $(CPPFLAGS) -c $<
 
 lint: $(LINTFILES)
+
+print-%:
+	@echo $*=$($*)
