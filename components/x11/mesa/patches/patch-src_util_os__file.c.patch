@@ -1,0 +1,43 @@
+os_same_file_description() for illumos (Solaris).
+
+On illumos it returned -1 (unknown), so radeonsi/amdgpu printed
+"amdgpu: os_same_file_description couldn't determine if two DRM fds
+reference the same file description" on every start and could not
+share one winsys between screens opened on the same fd.
+
+illumos DRM nodes are clone devices (every open() gets its own minor), so
+two character-device descriptors with the same st_dev/st_rdev come from
+one open(); different devices or files are different descriptions.
+Return values as in the FreeBSD branch.
+
+Upstream: https://gitlab.freedesktop.org/mesa/mesa (to be submitted).
+
+--- src/util/os_file.c.orig
++++ src/util/os_file.c
+@@ -283,6 +283,26 @@ os_same_file_description(int fd1, int fd2)
+       return -1;
+ 
+    return (fd1_kfile < fd2_kfile) | ((fd1_kfile > fd2_kfile) << 1);
++#elif DETECT_OS_SOLARIS
++   /* illumos/Solaris have neither kcmp() nor a way to compare open file
++    * descriptions, but the callers only pass DRM device files, and illumos
++    * DRM nodes are clone devices: every open() gets a minor number of its
++    * own, so two descriptors of the same character device (same st_dev and
++    * st_rdev) come from the same open(), i.e. from dup(). Different
++    * devices or files are always different descriptions; a regular file
++    * with the same inode cannot be told apart.
++    */
++   struct stat st1, st2;
++   if (fstat(fd1, &st1) || fstat(fd2, &st2))
++      return -1;
++   if (S_ISCHR(st1.st_mode) && S_ISCHR(st2.st_mode)) {
++      if (st1.st_dev == st2.st_dev && st1.st_rdev == st2.st_rdev)
++         return 0;
++      return (st1.st_rdev < st2.st_rdev) | ((st1.st_rdev > st2.st_rdev) << 1);
++   }
++   if (st1.st_dev != st2.st_dev || st1.st_ino != st2.st_ino)
++      return st1.st_ino < st2.st_ino ? 1 : 2;
++   return -1;
+ #elif DETECT_OS_LINUX
+    int efd = epoll_create1(EPOLL_CLOEXEC);
+    if (efd < 0)

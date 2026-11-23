@@ -1,0 +1,92 @@
+radeonsi/vce: validate the feedback size before reporting it.
+
+rvce_get_feedback() reports ptr[4] - ptr[9] (the firmware's end and start
+offsets in the bitstream buffer) without any check. After a failed or hung
+VCE job these words are garbage: the difference can wrap or exceed the
+buffer, and the VA frontend hands it on as the coded segment size, so the
+application is told to copy past the end of its coded buffer (Chromium
+150: "Insufficient output buffer size: 2097152, the buffer segment size:
+2386084", Radeon Pro 560 / Polaris 11, VCE 3.4, under OpenIndiana). The
+function also dereferences the feedback buffer when rvce_encode_bitstream()
+could not create it, and when the map fails.
+
+Remember the size the firmware was allowed to write
+(allowedMaxBitstreamSize = bs_size - bs_offset) with the feedback buffer,
+report 0 bytes and PIPE_VIDEO_FEEDBACK_METADATA_ENCODE_FLAG_FAILED for a
+missing or unmappable feedback buffer or an impossible size, so vaMapBuffer
+returns VA_STATUS_ERROR_ENCODING_ERROR instead of a bogus segment. This is
+robustness only: it does not prevent whatever made the firmware fail.
+
+Upstream code (unchanged on main, 2026-11-20):
+https://gitlab.freedesktop.org/mesa/mesa/-/blob/main/src/gallium/drivers/radeonsi/mm/radeon_vce.c
+Upstreamable (not yet submitted).
+
+--- src/gallium/drivers/radeonsi/mm/radeon_vce.h.orig
++++ src/gallium/drivers/radeonsi/mm/radeon_vce.h
+@@ -296,6 +296,7 @@
+ struct rvce_fb_buffer {
+    struct si_resource *res;
+    void *data;
++   unsigned max_size; /* bytes the firmware may write after the headers */
+ };
+ 
+ /* VCE encoder representation */
+--- src/gallium/drivers/radeonsi/mm/radeon_vce.c.orig
++++ src/gallium/drivers/radeonsi/mm/radeon_vce.c
+@@ -929,6 +929,7 @@
+    }
+ 
+    enc->fb->data = si_vce_encode_headers(enc);
++   enc->fb->max_size = enc->bs_size - enc->bs_offset;
+ 
+    session(enc);
+    encode(enc);
+@@ -958,19 +959,42 @@
+ {
+    struct rvce_encoder *enc = (struct rvce_encoder *)encoder;
+    struct rvce_fb_buffer *fb = feedback;
++   uint32_t *ptr = NULL;
++   bool failed = false;
+ 
+-   uint32_t *ptr = enc->ws->buffer_map(enc->ws, fb->res->buf, NULL,
+-                                       PIPE_MAP_READ_WRITE | RADEON_MAP_TEMPORARY);
++   if (fb->res)
++      ptr = enc->ws->buffer_map(enc->ws, fb->res->buf, NULL,
++                                PIPE_MAP_READ_WRITE | RADEON_MAP_TEMPORARY);
+ 
+-   if (ptr[1]) {
+-      *size = ptr[4] - ptr[9];
++   if (!ptr) {
++      RVID_ERR("Can't map feedback buffer.\n");
++      *size = 0;
++      failed = true;
++   } else if (ptr[1]) {
++      /* The firmware's end and start offsets: after a failed or hung job
++       * they are garbage, and an unchecked difference can wrap or exceed
++       * the bitstream buffer, so callers would copy past its end.
++       */
++      if (ptr[4] < ptr[9] || ptr[4] - ptr[9] > fb->max_size) {
++         RVID_ERR("VCE feedback reports %u bytes (end 0x%x, start 0x%x), "
++                  "the bitstream buffer holds %u.\n",
++                  ptr[4] - ptr[9], ptr[4], ptr[9], fb->max_size);
++         *size = 0;
++         failed = true;
++      } else {
++         *size = ptr[4] - ptr[9];
++      }
+    } else {
+       *size = 0;
+    }
+ 
+-   enc->ws->buffer_unmap(enc->ws, fb->res->buf);
++   if (ptr)
++      enc->ws->buffer_unmap(enc->ws, fb->res->buf);
+ 
+-   metadata->present_metadata = PIPE_VIDEO_FEEDBACK_METADATA_TYPE_CODEC_UNIT_LOCATION;
++   metadata->present_metadata = PIPE_VIDEO_FEEDBACK_METADATA_TYPE_CODEC_UNIT_LOCATION |
++                                PIPE_VIDEO_FEEDBACK_METADATA_TYPE_ENCODE_RESULT;
++   metadata->encode_result = failed ? PIPE_VIDEO_FEEDBACK_METADATA_ENCODE_FLAG_FAILED :
++                                      PIPE_VIDEO_FEEDBACK_METADATA_ENCODE_FLAG_OK;
+ 
+    if (fb->data) {
+       struct rvce_feedback_data *data = fb->data;

@@ -1,12 +1,11 @@
 {
     "dependencies": [
         "compress/zstd",
-        "developer/clang-21",
+        "developer/llvm/libclc-21",
+        "developer/llvm/spirv-llvm-translator-21",
         "library/expat",
+        "library/graphics/libva",
         "library/graphics/libvdpau",
-        "library/python/mako-314",
-        "library/python/packaging-314",
-        "library/python/pyyaml-314",
         "library/zlib",
         "runtime/clang-21",
         "service/opengl/ogl-select",
@@ -22,11 +21,9 @@
         "x11/library/libx11",
         "x11/library/libxcb",
         "x11/library/libxext",
-        "x11/library/libxfixes",
         "x11/library/libxshmfence",
-        "x11/library/libxv",
-        "x11/library/libxvmc",
-        "x11/library/libxxf86vm"
+        "x11/library/libxxf86vm",
+        "x11/library/spirv-tools"
     ],
     "fmris": [
         "x11/library/mesa"

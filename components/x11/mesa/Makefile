@@ -20,11 +20,12 @@ PYTHON_VERSION = 3.14
 include ../../../make-rules/shared-macros.mk
 
 COMPONENT_NAME= mesa
-COMPONENT_VERSION= 26.2.6
+COMPONENT_VERSION= 26.2.7
+COMPONENT_REVISION= 5
 COMPONENT_SUMMARY= The Mesa 3-D Graphics Library
 COMPONENT_SRC= mesa-$(COMPONENT_VERSION)
 COMPONENT_ARCHIVE= mesa-$(COMPONENT_VERSION).tar.xz
-COMPONENT_ARCHIVE_HASH= sha256:b9436b3e1a8be76fbd4823dc884f90596ab7c6ac5e1867a305e66ffccfb31a92
+COMPONENT_ARCHIVE_HASH= sha256:04294f75d22e9f61cd1e050206bc48b3d39366e788f1803a3368e3d5a872ce18
 COMPONENT_ARCHIVE_URL= https://archive.mesa3d.org/$(COMPONENT_ARCHIVE)
 COMPONENT_PROJECT_URL = http://www.mesa3d.org/
 
@@ -50,8 +51,16 @@ CONFIGURE_OPTIONS += --libdir='lib/mesa/amd64'
 # Mesa 26: i965 is gone (crocus drives Haswell and older Intel), osmesa,
 # xvmc and xa were removed upstream.  radeonsi (GCN: Tahiti in the Mac Pro
 # 2013 up to Navi) needs LLVM with the AMDGPU target: OpenIndiana's LLVM 21.
-# crocus needs mesa-clc (SPIRV-LLVM-Translator, not yet in OI): first build without it.
-CONFIGURE_OPTIONS += -Dgallium-drivers='softpipe,llvmpipe,i915,r600,radeonsi'
+# crocus (Haswell and older Intel) and iris (Broadwell and later: Kaby Lake
+# in the MacBook Pro 2017) build their GPU-side kernels with mesa-clc, which
+# needs LLVM 21's SPIRV-LLVM-Translator and libclc (developer/llvm/*-21, in
+# /usr/clang/21); libclc is linked in, so the drivers do not need it at run
+# time.
+CONFIGURE_OPTIONS += -Dgallium-drivers='softpipe,llvmpipe,i915,crocus,iris,r600,radeonsi'
+CONFIGURE_OPTIONS += -Dmesa-clc=enabled
+CONFIGURE_OPTIONS += -Dprecomp-compiler=enabled
+CONFIGURE_OPTIONS += -Dstatic-libclc=all
+PKG_CONFIG_PATH.prepend += /usr/clang/21/lib/pkgconfig /usr/clang/21/share/pkgconfig
 CONFIGURE_OPTIONS += -Dvulkan-drivers=''
 CONFIGURE_OPTIONS += -Dgbm=enabled
 CONFIGURE_OPTIONS += -Dglvnd=disabled
@@ -64,7 +73,12 @@ CONFIGURE_OPTIONS += -Degl=enabled
 CONFIGURE_OPTIONS += -Dgles1=enabled
 CONFIGURE_OPTIONS += -Dgles2=enabled
 CONFIGURE_OPTIONS += -Dshader-cache=enabled
-CONFIGURE_OPTIONS += -Dgallium-va=disabled
+# VA-API (libva): radeonsi_drv_video.so in /usr/lib/amd64/dri, libva's
+# driver directory, for UVD/VCE (Polaris: H.264, HEVC, VC-1 decode; H.264,
+# HEVC encode) and the Tahiti UVD 3.1.  All codecs: the hardware decides.
+CONFIGURE_OPTIONS += -Dgallium-va=enabled
+CONFIGURE_OPTIONS += -Dvideo-codecs=all
+CONFIGURE_OPTIONS += -Dva-libs-path=$(USRLIBDIR64)/dri
 CONFIGURE_OPTIONS += -Dvalgrind=disabled
 CONFIGURE_OPTIONS += -Dlibunwind=disabled
 CONFIGURE_OPTIONS += -Dlmsensors=disabled
@@ -99,6 +113,7 @@ MESA_RUNPATH = /usr/lib/mesa/$(MACH64):/usr/lib/xorg/$(MACH64):$(GCC_LIBDIR):/us
 COMPONENT_POST_INSTALL_ACTION.64 += \
 	for f in `find $(PROTOUSRLIBDIR)/mesa/$(MACH64) \
 	    $(PROTOUSRLIBDIR)/xorg/modules/dri/$(MACH64) \
+	    $(PROTOUSRLIBDIR)/$(MACH64)/dri \
 	    -type f -name "*.so*"` ; do \
 		elfedit -e "dyn:runpath $(MESA_RUNPATH)" $$f || exit 1 ; \
 	done ; \
@@ -109,12 +124,15 @@ REQUIRED_PACKAGES += x11/header/x11-protocols
 REQUIRED_PACKAGES += x11/library/libpthread-stubs
 REQUIRED_PACKAGES += system/header/header-drm
 REQUIRED_PACKAGES += library/graphics/libvdpau
-
+REQUIRED_PACKAGES += library/graphics/libva
+REQUIRED_PACKAGES += developer/llvm/spirv-llvm-translator-21
+REQUIRED_PACKAGES += developer/llvm/libclc-21
 # Auto-generated dependencies
+REQUIRED_PACKAGES += $(CLANG_RUNTIME_PKG)
 REQUIRED_PACKAGES += $(GCC_RUNTIME_PKG)
 REQUIRED_PACKAGES += $(GXX_RUNTIME_PKG)
-REQUIRED_PACKAGES += library/expat
 REQUIRED_PACKAGES += compress/zstd
+REQUIRED_PACKAGES += library/expat
 REQUIRED_PACKAGES += library/zlib
 REQUIRED_PACKAGES += service/opengl/ogl-select
 REQUIRED_PACKAGES += system/library
@@ -122,16 +140,9 @@ REQUIRED_PACKAGES += system/library/math
 REQUIRED_PACKAGES += x11/header/x11-protocols
 REQUIRED_PACKAGES += x11/library/glu
 REQUIRED_PACKAGES += x11/library/libdrm
-REQUIRED_PACKAGES += developer/clang-21
-REQUIRED_PACKAGES += runtime/clang-21
-REQUIRED_PACKAGES += library/python/mako-314
-REQUIRED_PACKAGES += library/python/packaging-314
-REQUIRED_PACKAGES += library/python/pyyaml-314
 REQUIRED_PACKAGES += x11/library/libx11
 REQUIRED_PACKAGES += x11/library/libxcb
 REQUIRED_PACKAGES += x11/library/libxext
-REQUIRED_PACKAGES += x11/library/libxfixes
 REQUIRED_PACKAGES += x11/library/libxshmfence
-REQUIRED_PACKAGES += x11/library/libxv
-REQUIRED_PACKAGES += x11/library/libxvmc
 REQUIRED_PACKAGES += x11/library/libxxf86vm
+REQUIRED_PACKAGES += x11/library/spirv-tools

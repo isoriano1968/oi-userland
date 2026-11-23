@@ -1,0 +1,42 @@
+frontends/dri: list LINEAR for YUV formats when the driver has no modifier query.
+
+radeonsi before GFX9 (Polaris and older) has no query_dmabuf_modifiers,
+so eglQueryDmaBufModifiersEXT returns no modifiers for any format
+("implicit only"). Importing a YUV dma-buf with an explicit LINEAR
+modifier works on such a driver (format_and_modifier_supported accepts it
+without is_dmabuf_modifier_supported), but importers that negotiate
+explicit modifiers see none: GStreamer's glupload advertises no DMA_DRM
+formats, so vah264dec's NV12:0x0 output (see the frontends/va patch)
+cannot be imported and every frame is copied through system memory.
+
+For YUV formats, report DRM_FORMAT_MOD_LINEAR (external-only as for
+native sampling) when the screen has no modifier query. RGB formats keep
+the implicit-only answer, so DRI3/glamor modifier negotiation is
+unchanged. Found on a Radeon Pro 560 (Polaris 11) under OpenIndiana.
+Upstreamable (not yet submitted).
+
+--- src/gallium/frontends/dri/dri2.c.orig
++++ src/gallium/frontends/dri/dri2.c
+@@ -1324,6 +1324,22 @@
+             for (int i = 0; i < *count; i++)
+                external_only[i] = true;
+          }
++      } else if (util_format_is_yuv(format)) {
++         /* No modifier query (radeonsi before GFX9, for one): such a
++          * driver still imports a YUV buffer with an explicit LINEAR
++          * modifier (format_and_modifier_supported), and its video
++          * buffers are linear. List LINEAR, so that importers which
++          * negotiate explicit modifiers (GStreamer's glupload against
++          * vah264dec's DMA_DRM NV12:0x0) can use the zero-copy path.
++          * RGB formats keep the implicit-only answer, so DRI3/glamor
++          * modifier negotiation is unchanged.
++          */
++         if (max > 0) {
++            modifiers[0] = DRM_FORMAT_MOD_LINEAR;
++            if (external_only)
++               external_only[0] = !native_sampling;
++         }
++         *count = 1;
+       } else {
+          *count = 0;
+       }
