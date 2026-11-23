@@ -20,7 +20,7 @@ include ../../../make-rules/shared-macros.mk
 
 COMPONENT_NAME=		xvr-300-config
 COMPONENT_VERSION=	1.0
-COMPONENT_REVISION=	1
+COMPONENT_REVISION=	2
 COMPONENT_SUMMARY=	Xorg and MATE settings for the Sun XVR-300
 COMPONENT_FMRI=		x11/server/xorg/config/xvr-300
 COMPONENT_CLASSIFICATION=	System/X11
