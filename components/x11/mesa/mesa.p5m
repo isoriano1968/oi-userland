@@ -58,6 +58,7 @@ link path=usr/lib/$(MACH64)/pkgconfig/dri.pc target=../../mesa/$(MACH64)/pkgconf
 link path=usr/lib/$(MACH64)/pkgconfig/egl.pc target=../../mesa/$(MACH64)/pkgconfig/egl.pc
 link path=usr/lib/$(MACH64)/pkgconfig/gbm.pc target=../../mesa/$(MACH64)/pkgconfig/gbm.pc
 link path=usr/lib/$(MACH64)/pkgconfig/gl.pc target=../../mesa/$(MACH64)/pkgconfig/gl.pc
+link path=usr/lib/$(MACH64)/pkgconfig/glx.pc target=../../mesa/$(MACH64)/pkgconfig/glx.pc
 link path=usr/lib/$(MACH64)/pkgconfig/glesv1_cm.pc target=../../mesa/$(MACH64)/pkgconfig/glesv1_cm.pc
 link path=usr/lib/$(MACH64)/pkgconfig/glesv2.pc target=../../mesa/$(MACH64)/pkgconfig/glesv2.pc
 
