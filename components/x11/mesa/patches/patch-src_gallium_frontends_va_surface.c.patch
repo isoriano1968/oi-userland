@@ -1,0 +1,59 @@
+frontends/va: linear video buffers on drivers without modifier support.
+
+radeonsi before GFX9 (Polaris and older) has no
+resource_create_with_modifiers, so it creates every video buffer linear
+but leaves the exported modifier DRM_FORMAT_MOD_INVALID, and
+vaCreateSurfaces with a VASurfaceAttribDRMFormatModifiers list fails with
+VA_STATUS_ERROR_ATTR_NOT_SUPPORTED even when the list allows LINEAR.
+GStreamer's va plugin drops formats whose probe export reports INVALID
+(gst_va_create_dma_caps), and allocates with an explicit modifier list,
+so a Polaris VA decoder offers no memory:DMABuf output and zero-copy
+playback (vah264dec ! glupload) is impossible.
+
+Report DRM_FORMAT_MOD_LINEAR for a linear resource whose modifier the
+driver left INVALID, and accept a modifier list that contains LINEAR on a
+driver without create_video_buffer_with_modifiers by creating the buffer
+linear. Found on a Radeon Pro 560 (Polaris 11) under OpenIndiana.
+Upstreamable (not yet submitted).
+
+--- src/gallium/frontends/va/surface.c.orig
++++ src/gallium/frontends/va/surface.c
+@@ -755,9 +755,19 @@
+    struct pipe_surface *surfaces;
+    unsigned i;
+ 
+-   if (modifiers_count > 0) {
+-      if (!drv->pipe->create_video_buffer_with_modifiers)
++   if (modifiers_count > 0 && !drv->pipe->create_video_buffer_with_modifiers) {
++      /* Without modifier support (radeonsi before GFX9, for one), a driver
++       * can still allocate linear: accept a list that allows LINEAR and
++       * create the buffer linear, as the export then reports.
++       */
++      bool linear = false;
++      for (i = 0; i < modifiers_count; i++)
++         linear |= modifiers[i] == DRM_FORMAT_MOD_LINEAR;
++      if (!linear)
+          return VA_STATUS_ERROR_ATTR_NOT_SUPPORTED;
++      templat->bind |= PIPE_BIND_LINEAR;
++      surface->buffer = drv->pipe->create_video_buffer(drv->pipe, templat);
++   } else if (modifiers_count > 0) {
+       surface->buffer =
+          drv->pipe->create_video_buffer_with_modifiers(drv->pipe, templat,
+                                                        modifiers,
+@@ -1281,6 +1291,16 @@
+          goto fail;
+       }
+ 
++      /* Drivers without modifier support leave the modifier of a linear
++       * resource INVALID (radeonsi before GFX9 creates every video buffer
++       * linear). Linear is DRM_FORMAT_MOD_LINEAR: report it, so importers
++       * that need an explicit modifier (GStreamer's va, Wayland
++       * compositors) can take the buffer.
++       */
++      if (whandle.modifier == DRM_FORMAT_MOD_INVALID &&
++          (resource->bind & PIPE_BIND_LINEAR))
++         whandle.modifier = DRM_FORMAT_MOD_LINEAR;
++
+       /* If this plane shares storage with previous one, we can reuse
+        * the existing object (fd) instead of adding new one.
+        */

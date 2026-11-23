@@ -1,0 +1,32 @@
+xxhash: take the C11 keywords only in C, not in C++.
+
+GCC on illumos (and Solaris) defines __STDC_VERSION__ (201112L) in C++ as
+well, so that the system headers expose their C99/C11 declarations.
+xxhash.h tests __STDC_VERSION__ before __cplusplus for XXH_ALIGN and
+XXH_STATIC_ASSERT, so every C++ file that includes it got _Alignas and
+_Static_assert, which C++ does not have ("'_Alignas' was not declared in
+this scope", followed by XXH3_kSecret, acc, ... errors). xxHash already
+handles this case for XXH_RESTRICT ("Solaris includes __STDC_VERSION__
+with C++"); do the same for the two C11 keywords. Upstreamable (xxHash
+and Mesa's copy).
+
+--- src/util/xxhash.h.orig	2026-11-11 13:21:59.115072955 +0100
++++ src/util/xxhash.h	2026-11-11 13:21:59.238064898 +0100
+@@ -1704,7 +1704,7 @@
+ 
+ #ifndef XXH_NO_XXH3
+ 
+-#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L) /* >= C11 */
++#if !defined(__cplusplus) && defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L) /* >= C11 */
+ #  define XXH_ALIGN(n)      _Alignas(n)
+ #elif defined(__cplusplus) && (__cplusplus >= 201103L) /* >= C++11 */
+ /* In C++ alignas() is a keyword */
+@@ -2496,7 +2496,7 @@
+ 
+ /* note: use after variable declarations */
+ #ifndef XXH_STATIC_ASSERT
+-#  if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L)    /* C11 */
++#  if !defined(__cplusplus) && defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L)    /* C11 */
+ #    define XXH_STATIC_ASSERT_WITH_MESSAGE(c,m) do { _Static_assert((c),m); } while(0)
+ #  elif defined(__cplusplus) && (__cplusplus >= 201103L)            /* C++11 */
+ #    define XXH_STATIC_ASSERT_WITH_MESSAGE(c,m) do { static_assert((c),m); } while(0)

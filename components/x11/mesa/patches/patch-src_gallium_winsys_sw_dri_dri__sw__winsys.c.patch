@@ -1,0 +1,28 @@
+illumos/Solaris: shmat(2) of a segment already marked with IPC_RMID fails,
+so the X server cannot attach the swrast display target and every
+XShmPutImage is lost ("Failed to attach to x11 shm", a black screen with
+llvmpipe/softpipe through EGL or GLX on X11). Linux allows the attach.
+Keep the segment until dri_sw_displaytarget_destroy(), which already
+removes it.
+
+--- src/gallium/winsys/sw/dri/dri_sw_winsys.c.orig
++++ src/gallium/winsys/sw/dri/dri_sw_winsys.c
+@@ -114,10 +114,17 @@
+    }
+ 
+    addr = (char *) shmat(dri_sw_dt->shmid, NULL, 0);
+-   /* mark the segment immediately for deletion to avoid leaks */
++#if !defined(__sun)
++   /*
++    * Mark the segment immediately for deletion to avoid leaks. Not on
++    * illumos/Solaris: there no other process (the X server) can attach a
++    * segment once it is marked; dri_sw_displaytarget_destroy() removes it.
++    */
+    shmctl(dri_sw_dt->shmid, IPC_RMID, NULL);
++#endif
+ 
+    if (addr == (char *) -1) {
++      shmctl(dri_sw_dt->shmid, IPC_RMID, NULL);
+       dri_sw_dt->shmid = -1;
+       return NULL;
+    }

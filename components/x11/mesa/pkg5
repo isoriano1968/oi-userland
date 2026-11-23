@@ -1,8 +1,13 @@
 {
     "dependencies": [
+        "compress/zstd",
+        "developer/llvm/libclc-21",
+        "developer/llvm/spirv-llvm-translator-21",
         "library/expat",
+        "library/graphics/libva",
         "library/graphics/libvdpau",
         "library/zlib",
+        "runtime/clang-21",
         "service/opengl/ogl-select",
         "system/header/header-drm",
         "system/library",
@@ -16,11 +21,9 @@
         "x11/library/libx11",
         "x11/library/libxcb",
         "x11/library/libxext",
-        "x11/library/libxfixes",
         "x11/library/libxshmfence",
-        "x11/library/libxv",
-        "x11/library/libxvmc",
-        "x11/library/libxxf86vm"
+        "x11/library/libxxf86vm",
+        "x11/library/spirv-tools"
     ],
     "fmris": [
         "x11/library/mesa"

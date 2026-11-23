@@ -1,0 +1,17 @@
+util: CPU_TO_LE32 for big-endian illumos (SPARC)
+
+illumos has no <sys/endian.h>: on SPARC (big-endian) compiler.h fell into
+the BSD branch and did not compile. Little-endian builds are unaffected.
+Not yet submitted upstream.
+
+--- src/util/compiler.h
++++ src/util/compiler.h
+@@ -62,6 +62,8 @@
+ #elif defined(__OpenBSD__)
+ #include <sys/types.h>
+ #define CPU_TO_LE32( x ) htole32( x )
++#elif defined(__sun)
++#define CPU_TO_LE32( x ) __builtin_bswap32( x )
+ #else /*__linux__ */
+ #include <sys/endian.h>
+ #define CPU_TO_LE32( x ) bswap32( x )
