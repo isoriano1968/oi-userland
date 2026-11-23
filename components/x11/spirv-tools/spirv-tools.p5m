@@ -25,6 +25,7 @@ license $(COMPONENT_LICENSE_FILE) license='$(COMPONENT_LICENSE)'
 
 file path=usr/bin/spirv-as
 file path=usr/bin/spirv-cfg
+file path=usr/bin/spirv-diff
 file path=usr/bin/spirv-dis
 file path=usr/bin/spirv-lesspipe.sh
 file path=usr/bin/spirv-link
@@ -33,7 +34,6 @@ file path=usr/bin/spirv-objdump
 file path=usr/bin/spirv-opt
 file path=usr/bin/spirv-reduce
 file path=usr/bin/spirv-val
-file path=usr/include/spirv-tools/instrument.hpp
 file path=usr/include/spirv-tools/libspirv.h
 file path=usr/include/spirv-tools/libspirv.hpp
 file path=usr/include/spirv-tools/linker.hpp
