@@ -1,0 +1,10 @@
+{
+    "dependencies": [
+        "developer/clang-21",
+        "developer/llvm/spirv-llvm-translator-21"
+    ],
+    "fmris": [
+        "developer/llvm/libclc-21"
+    ],
+    "name": "libclc"
+}
