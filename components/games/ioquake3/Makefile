@@ -15,6 +15,10 @@
 
 BUILD_STYLE=cmake
 USE_PARALLEL_BUILD=yes
+ifeq ($(shell uname -p),sparc)
+# OpenIndiana SPARC: gcc 13 is its newest.
+GCC_VERSION = 13
+endif
 include ../../../make-rules/shared-macros.mk
 
 # No release since 1.36 (2009); upstream's builds are from master.
@@ -22,7 +26,7 @@ COMPONENT_GIT_HASH=	87a99d18206e878a20289f05ac3c16005dcae5c3
 
 COMPONENT_NAME=		ioquake3
 COMPONENT_VERSION=	1.36.20261012
-COMPONENT_REVISION=	1
+COMPONENT_REVISION=	3
 COMPONENT_SUMMARY=	Quake III Arena engine (game data not included)
 COMPONENT_PROJECT_URL=	https://ioquake3.org/
 COMPONENT_FMRI=		games/ioquake3
