@@ -1,0 +1,71 @@
+#
+# This file and its contents are supplied under the terms of the
+# Common Development and Distribution License ("CDDL"), version 1.0.
+# You may only use this file in accordance with the terms of version
+# 1.0 of the CDDL.
+#
+# A full copy of the text of the CDDL should have accompanied this
+# source.  A copy of the CDDL is also available via the Internet at
+# http://www.illumos.org/license/CDDL.
+#
+
+#
+# Copyright 2026 <contributor>
+#
+
+set name=pkg.fmri value=pkg:/$(COMPONENT_FMRI)@$(IPS_COMPONENT_VERSION),$(BUILD_VERSION)
+set name=pkg.human-version value=$(HUMAN_VERSION)
+set name=pkg.summary value="$(COMPONENT_SUMMARY)"
+set name=info.classification value="$(COMPONENT_CLASSIFICATION)"
+set name=info.upstream-url value=$(COMPONENT_PROJECT_URL)
+set name=info.source-url value=$(COMPONENT_ARCHIVE_URL)
+set name=org.opensolaris.consolidation value=$(CONSOLIDATION)
+
+license $(COMPONENT_LICENSE_FILE) license='$(COMPONENT_LICENSE)'
+
+file path=usr/include/va/va.h
+file path=usr/include/va/va_backend.h
+file path=usr/include/va/va_backend_prot.h
+file path=usr/include/va/va_backend_vpp.h
+file path=usr/include/va/va_compat.h
+file path=usr/include/va/va_dec_av1.h
+file path=usr/include/va/va_dec_hevc.h
+file path=usr/include/va/va_dec_jpeg.h
+file path=usr/include/va/va_dec_vp8.h
+file path=usr/include/va/va_dec_vp9.h
+file path=usr/include/va/va_dec_vvc.h
+file path=usr/include/va/va_dri2.h
+file path=usr/include/va/va_dri3.h
+file path=usr/include/va/va_dricommon.h
+file path=usr/include/va/va_drm.h
+file path=usr/include/va/va_drmcommon.h
+file path=usr/include/va/va_egl.h
+file path=usr/include/va/va_enc_av1.h
+file path=usr/include/va/va_enc_h264.h
+file path=usr/include/va/va_enc_hevc.h
+file path=usr/include/va/va_enc_jpeg.h
+file path=usr/include/va/va_enc_mpeg2.h
+file path=usr/include/va/va_enc_vp8.h
+file path=usr/include/va/va_enc_vp9.h
+file path=usr/include/va/va_fei.h
+file path=usr/include/va/va_fei_h264.h
+file path=usr/include/va/va_fei_hevc.h
+file path=usr/include/va/va_prot.h
+file path=usr/include/va/va_str.h
+file path=usr/include/va/va_tpi.h
+file path=usr/include/va/va_trace.h
+file path=usr/include/va/va_version.h
+file path=usr/include/va/va_vpp.h
+file path=usr/include/va/va_x11.h
+link path=usr/lib/$(MACH64)/libva-drm.so target=libva-drm.so.2
+link path=usr/lib/$(MACH64)/libva-drm.so.2 target=libva-drm.so.2.2400.0
+file path=usr/lib/$(MACH64)/libva-drm.so.2.2400.0
+link path=usr/lib/$(MACH64)/libva-x11.so target=libva-x11.so.2
+link path=usr/lib/$(MACH64)/libva-x11.so.2 target=libva-x11.so.2.2400.0
+file path=usr/lib/$(MACH64)/libva-x11.so.2.2400.0
+link path=usr/lib/$(MACH64)/libva.so target=libva.so.2
+link path=usr/lib/$(MACH64)/libva.so.2 target=libva.so.2.2400.0
+file path=usr/lib/$(MACH64)/libva.so.2.2400.0
+file path=usr/lib/$(MACH64)/pkgconfig/libva-drm.pc
+file path=usr/lib/$(MACH64)/pkgconfig/libva-x11.pc
+file path=usr/lib/$(MACH64)/pkgconfig/libva.pc
