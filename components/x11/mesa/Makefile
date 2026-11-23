@@ -129,6 +129,10 @@ ifeq ($(MACH),sparc)
 # OpenIndiana SPARC does not have yet for its python-314: a build machine
 # names a bin directory with such a python3.14 in MESA_PYTHON_BINDIR.
 PATH.prepend += $(MESA_PYTHON_BINDIR)
+# Workaround for an illumos ld bug: GNU binutils linked on sparc have _end
+# inside their own data, so the heap overwrites it and gar dies with SIGBUS
+# on libmesa_util.a.  Drop this when binutils has been relinked.
+CONFIGURE_ENV += AR=/usr/bin/ar
 endif
 CONFIGURE_ENV += CPPFLAGS="$(CPPFLAGS)"
 
