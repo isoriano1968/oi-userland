@@ -112,6 +112,7 @@ CONFIGURE_ENV += XGETTEXT=/usr/gnu/bin/xgettext
 # yelp.m4 for the docs (gdm-44-yelp-port)
 REQUIRED_PACKAGES += library/gnome/yelp-tools
 REQUIRED_PACKAGES += gnome/config/gconf
+REQUIRED_PACKAGES += gnome/accessibility/at-spi2-core
 REQUIRED_PACKAGES += gnome/gnome-session-2
 REQUIRED_PACKAGES += library/desktop/cairo
 REQUIRED_PACKAGES += library/desktop/gdk-pixbuf
@@ -126,6 +127,7 @@ REQUIRED_PACKAGES += system/library
 REQUIRED_PACKAGES += system/library/dbus/dbus-x11
 REQUIRED_PACKAGES += system/library/fontconfig
 REQUIRED_PACKAGES += system/library/libdbus
+REQUIRED_PACKAGES += system/library/libdbus/32
 REQUIRED_PACKAGES += system/library/libdbus-glib
 REQUIRED_PACKAGES += system/library/math
 REQUIRED_PACKAGES += x11/library/libx11
