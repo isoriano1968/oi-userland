@@ -56,14 +56,17 @@ COMPONENT_PRE_CONFIGURE_ACTION= ( $(CLONEY) $(SOURCE_DIR) $(@D) )
 # Drop 32-bit binaries
 COMPONENT_POST_INSTALL_ACTION += $(RM) -r $(PROTOUSRBINDIR32) ;
 COMPONENT_POST_INSTALL_ACTION += $(RM) -r $(PROTOUSRSBINDIR32) ;
-COMPONENT_POST_INSTALL_ACTION.32 += $(RM) -r $(PROTOUSRLIBEXECDIR32) ;
+# The 32-bit helpers install into their own directory, which is removed:
+# only the 64-bit ones are shipped, whatever the install order of the two.
+COMPONENT_POST_INSTALL_ACTION.32 += $(RM) -r $(PROTOUSRLIBEXECDIR)/$(MACH32) ;
 
 MACHBITS=$(patsubst /i86,,/$(MACH$(BITS)))
 
 CONFIGURE_OPTIONS += --sysconfdir=/etc
 # Use the following if libexec and libexec/amd64 should be used for 32 and 64 bit.
 #CONFIGURE_OPTIONS += --libexecdir=/usr/libexec$(MACHBITS)
-CONFIGURE_OPTIONS += --libexecdir=/usr/libexec
+CONFIGURE_OPTIONS.32 += --libexecdir=/usr/libexec/$(MACH32)
+CONFIGURE_OPTIONS.64 += --libexecdir=/usr/libexec
 CONFIGURE_OPTIONS += --localstatedir=$(VARDIR)
 CONFIGURE_OPTIONS += --enable-pam-module
 CONFIGURE_OPTIONS += --with-pam-module-dir=/usr/lib/security$(MACHBITS)
