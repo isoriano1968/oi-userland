@@ -14,10 +14,15 @@
 #
 
 BUILD_BITS= 64_and_32
+# GCC 14 is not in the SPARC repository yet
+ifeq ($(shell uname -p),sparc)
+GCC_VERSION = 13
+endif
 include ../../../../make-rules/shared-macros.mk
 
 COMPONENT_NAME= gdm
 COMPONENT_VERSION= 2.30.7
+COMPONENT_REVISION= 1
 COMPONENT_SUMMARY= GNOME display manager
 COMPONENT_SRC= $(COMPONENT_NAME)-$(COMPONENT_VERSION)
 COMPONENT_ARCHIVE= $(COMPONENT_SRC).tar.bz2

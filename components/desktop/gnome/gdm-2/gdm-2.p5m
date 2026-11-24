@@ -32,6 +32,8 @@ user gcos-field="GDM Reserved UID" group=gdm home-dir=/var/lib/gdm uid=50 userna
 
 depend fmri=__TBD pkg.debug.depend.file=usr/bin/dbus-launch type=require
 depend fmri=__TBD pkg.debug.depend.file=usr/bin/gnome-session type=require
+# the greeter starts the AT-SPI D-Bus bus (patch gdm-50)
+depend fmri=__TBD pkg.debug.depend.file=usr/libexec/at-spi-bus-launcher type=require
 
 dir path=etc/X11/xinit/xinitrc.d group=sys
 dir path=var/cache/gdm group=gdm

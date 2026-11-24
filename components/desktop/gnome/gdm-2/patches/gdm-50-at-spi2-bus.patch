@@ -1,0 +1,24 @@
+Greeter accessibility with at-spi2: the greeter's gnome-session autostarts
+at-spi-registryd-wrapper.desktop, which runs the at-spi 1.x (CORBA) registry
+$libexecdir/at-spi-registryd. OpenIndiana has only at-spi2-core, so every
+greeter start logs "Could not launch application
+'at-spi-registryd-wrapper.desktop'" and the login screen has no assistive
+technology support. With at-spi2 the session needs the AT-SPI D-Bus bus,
+which then starts at-spi2-registryd on demand: run at-spi-bus-launcher
+--launch-immediately, as at-spi2-core's own at-spi-dbus-bus.desktop does.
+The file name and its translated names stay, so the package keeps its
+paths. Later GDM releases dropped this entry altogether (at-spi2 is
+started by the session); this is the 2.30 equivalent.
+
+diff --git a/data/greeter-autostart/at-spi-registryd-wrapper.desktop.in.in b/data/greeter-autostart/at-spi-registryd-wrapper.desktop.in.in
+--- a/data/greeter-autostart/at-spi-registryd-wrapper.desktop.in.in
++++ b/data/greeter-autostart/at-spi-registryd-wrapper.desktop.in.in
+@@ -1,7 +1,7 @@
+ [Desktop Entry]
+ Type=Application
+ _Name=AT SPI Registry Wrapper
+-Exec=@AT_SPI_REGISTRYD_DIR@/at-spi-registryd
++Exec=@AT_SPI_REGISTRYD_DIR@/at-spi-bus-launcher --launch-immediately
+ OnlyShowIn=GNOME;
+ AutostartCondition=GNOME /desktop/gnome/interface/accessibility
+ X-GNOME-Autostart-Phase=Initialization
