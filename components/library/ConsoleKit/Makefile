@@ -60,7 +60,9 @@ COMPONENT_POST_INSTALL_ACTION += $(RM) -r $(PROTOUSRSBINDIR32) ;
 # only the 64-bit ones are shipped, whatever the install order of the two.
 COMPONENT_POST_INSTALL_ACTION.32 += $(RM) -r $(PROTOUSRLIBEXECDIR)/$(MACH32) ;
 
-MACHBITS=$(patsubst /i86,,/$(MACH$(BITS)))
+# The 32-bit PAM module goes to /usr/lib/security, the 64-bit one to its
+# $(MACH64) subdirectory (i86 and sparcv7 alike).
+MACHBITS=$(patsubst /$(MACH32),,/$(MACH$(BITS)))
 
 CONFIGURE_OPTIONS += --sysconfdir=/etc
 # Use the following if libexec and libexec/amd64 should be used for 32 and 64 bit.
