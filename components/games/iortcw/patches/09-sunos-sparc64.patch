@@ -1,0 +1,115 @@
+SunOS on 64-bit SPARC (SP and MP): isainfo -n (patch 01) says sparcv9 there,
+which the Makefile does not know ("arch sparcv9 is currently not
+supported"). Map it to sparc64, the Makefile's name for 64-bit SPARC (-m64),
+as amd64 is mapped to x86_64. q_platform.h's __sun block then has to name
+64-bit SPARC "sparc64" too, since the engine loads its modules
+(qagame/cgame/ui, renderer) by ARCH_STRING and the Makefile names them by
+FILE_ARCH. The SPARC VM compiler, vm_sparc.c, is built only for ARCH=sparc;
+with patches 06 and 07 it works for the 64-bit ABI as well, so build it and
+set HAVE_VM_COMPILED for sparc64 too.
+
+Upstream: not submitted yet; no issue or pull request about it at
+https://github.com/iortcw/iortcw (checked 2026-11-24).
+
+--- iortcw-438e7d413b5f7277187c35b032eb0ef9093ae778/SP/Makefile.orig
++++ iortcw-438e7d413b5f7277187c35b032eb0ef9093ae778/SP/Makefile
+@@ -74,6 +74,10 @@
+   COMPILE_ARCH=x86_64
+ endif
+ 
++ifeq ($(COMPILE_ARCH),sparcv9)
++  COMPILE_ARCH=sparc64
++endif
++
+ ifeq ($(COMPILE_ARCH),powerpc)
+   COMPILE_ARCH=ppc
+ endif
+@@ -1090,7 +1094,7 @@
+   HAVE_VM_COMPILED=false
+ endif
+ 
+-ifneq ($(filter $(ARCH),armv7l x86 x86_64 ppc sparc),)
++ifneq ($(filter $(ARCH),armv7l x86 x86_64 ppc sparc sparc64),)
+   HAVE_VM_COMPILED=true
+ endif
+ 
+@@ -2307,7 +2311,7 @@
+   ifneq ($(findstring $(ARCH),ppc),)
+     Q3OBJ += $(B)/client/vm_powerpc.o $(B)/client/vm_powerpc_asm.o
+   endif
+-  ifneq ($(findstring $(ARCH),sparc),)
++  ifneq ($(filter $(ARCH),sparc sparc64),)
+     Q3OBJ += $(B)/client/vm_sparc.o
+   endif
+   ifeq ($(ARCH),armv7l)
+@@ -2483,7 +2487,7 @@
+   ifneq ($(findstring $(ARCH),ppc),)
+     Q3DOBJ += $(B)/ded/vm_powerpc.o $(B)/ded/vm_powerpc_asm.o
+   endif
+-  ifneq ($(findstring $(ARCH),sparc),)
++  ifneq ($(filter $(ARCH),sparc sparc64),)
+     Q3DOBJ += $(B)/ded/vm_sparc.o
+   endif
+   ifeq ($(ARCH),armv7l)
+--- iortcw-438e7d413b5f7277187c35b032eb0ef9093ae778/SP/code/qcommon/q_platform.h.orig
++++ iortcw-438e7d413b5f7277187c35b032eb0ef9093ae778/SP/code/qcommon/q_platform.h
+@@ -267,6 +267,8 @@
+ #define ARCH_STRING "x86_64"
+ #elif defined(__i386__)
+ #define ARCH_STRING "i386"
++#elif defined(__sparcv9) || defined(__arch64__)
++#define ARCH_STRING "sparc64"
+ #elif defined __sparc
+ #define ARCH_STRING "sparc"
+ #endif
+--- iortcw-438e7d413b5f7277187c35b032eb0ef9093ae778/MP/Makefile.orig
++++ iortcw-438e7d413b5f7277187c35b032eb0ef9093ae778/MP/Makefile
+@@ -77,6 +77,10 @@
+   COMPILE_ARCH=x86_64
+ endif
+ 
++ifeq ($(COMPILE_ARCH),sparcv9)
++  COMPILE_ARCH=sparc64
++endif
++
+ ifeq ($(COMPILE_ARCH),powerpc)
+   COMPILE_ARCH=ppc
+ endif
+@@ -1101,7 +1105,7 @@
+   HAVE_VM_COMPILED=false
+ endif
+ 
+-ifneq ($(filter $(ARCH),armv7l x86 x86_64 ppc sparc),)
++ifneq ($(filter $(ARCH),armv7l x86 x86_64 ppc sparc sparc64),)
+   HAVE_VM_COMPILED=true
+ endif
+ 
+@@ -2336,7 +2340,7 @@
+   ifneq ($(findstring $(ARCH),ppc),)
+     Q3OBJ += $(B)/client/vm_powerpc.o $(B)/client/vm_powerpc_asm.o
+   endif
+-  ifneq ($(findstring $(ARCH),sparc),)
++  ifneq ($(filter $(ARCH),sparc sparc64),)
+     Q3OBJ += $(B)/client/vm_sparc.o
+   endif
+   ifeq ($(ARCH),armv7l)
+@@ -2516,7 +2520,7 @@
+   ifneq ($(findstring $(ARCH),ppc),)
+     Q3DOBJ += $(B)/ded/vm_powerpc.o $(B)/ded/vm_powerpc_asm.o
+   endif
+-  ifneq ($(findstring $(ARCH),sparc),)
++  ifneq ($(filter $(ARCH),sparc sparc64),)
+     Q3DOBJ += $(B)/ded/vm_sparc.o
+   endif
+   ifeq ($(ARCH),armv7l)
+--- iortcw-438e7d413b5f7277187c35b032eb0ef9093ae778/MP/code/qcommon/q_platform.h.orig
++++ iortcw-438e7d413b5f7277187c35b032eb0ef9093ae778/MP/code/qcommon/q_platform.h
+@@ -267,6 +267,8 @@
+ #define ARCH_STRING "x86_64"
+ #elif defined(__i386__)
+ #define ARCH_STRING "i386"
++#elif defined(__sparcv9) || defined(__arch64__)
++#define ARCH_STRING "sparc64"
+ #elif defined __sparc
+ #define ARCH_STRING "sparc"
+ #endif
