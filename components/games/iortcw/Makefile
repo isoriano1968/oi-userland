@@ -47,6 +47,11 @@ PATH=$(PATH.gnu)
 # two trees with a Makefile each; both install into /usr/lib/iortcw.
 # /usr/bin/iortcw-* are links (see the manifest), so the engines must not
 # take their base directory from argv[0].
+# The engine names its binaries and modules by architecture (patches 01, 09).
+RTCW_ARCH.i386=		x86_64
+RTCW_ARCH.sparc=	sparc64
+PKG_MACROS+=		RTCW_ARCH=$(RTCW_ARCH.$(MACH))
+
 RTCW_LIBDIR=		$(USRLIBDIR)/iortcw
 # The system's libraries; the Opus codec needs opusfile, which is not
 # packaged, VoIP needs only libopus (02-voip-without-opusfile.patch).

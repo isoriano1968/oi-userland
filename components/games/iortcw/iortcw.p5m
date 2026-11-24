@@ -26,29 +26,29 @@ license MP/COPYING.txt license='$(COMPONENT_LICENSE), MP'
 
 # The engines load their renderers and game modules from their own directory.
 <transform file path=usr/lib/iortcw/.*\.so$ -> default pkg.linted.userland.action001.2 true>
-<transform file path=usr/lib/iortcw/iowolf(sp|mp|ded)\.x86_64$ -> default mode 0555>
+<transform file path=usr/lib/iortcw/iowolf(sp|mp|ded)\.$(RTCW_ARCH)$ -> default mode 0555>
 
-link path=usr/bin/iortcw-ded target=../lib/iortcw/iowolfded.x86_64
-link path=usr/bin/iortcw-mp target=../lib/iortcw/iowolfmp.x86_64
-link path=usr/bin/iortcw-sp target=../lib/iortcw/iowolfsp.x86_64
+link path=usr/bin/iortcw-ded target=../lib/iortcw/iowolfded.$(RTCW_ARCH)
+link path=usr/bin/iortcw-mp target=../lib/iortcw/iowolfmp.$(RTCW_ARCH)
+link path=usr/bin/iortcw-sp target=../lib/iortcw/iowolfsp.$(RTCW_ARCH)
 
 # dlopen()ed
 depend type=require fmri=__TBD pkg.debug.depend.file=usr/lib/$(MACH64)/libcurl.so.4
 depend type=require fmri=__TBD pkg.debug.depend.file=usr/lib/$(MACH64)/libopenal.so.1
 
-file path=usr/lib/iortcw/iowolfded.x86_64
-file path=usr/lib/iortcw/iowolfmp.x86_64
-file path=usr/lib/iortcw/iowolfsp.x86_64
-file path=usr/lib/iortcw/main/cgame.mp.x86_64.so
-file path=usr/lib/iortcw/main/cgame.sp.x86_64.so
-file path=usr/lib/iortcw/main/qagame.mp.x86_64.so
-file path=usr/lib/iortcw/main/qagame.sp.x86_64.so
-file path=usr/lib/iortcw/main/ui.mp.x86_64.so
-file path=usr/lib/iortcw/main/ui.sp.x86_64.so
-file path=usr/lib/iortcw/renderer_mp_opengl1_x86_64.so
-file path=usr/lib/iortcw/renderer_mp_rend2_x86_64.so
-file path=usr/lib/iortcw/renderer_sp_opengl1_x86_64.so
-file path=usr/lib/iortcw/renderer_sp_rend2_x86_64.so
+file path=usr/lib/iortcw/iowolfded.$(RTCW_ARCH)
+file path=usr/lib/iortcw/iowolfmp.$(RTCW_ARCH)
+file path=usr/lib/iortcw/iowolfsp.$(RTCW_ARCH)
+file path=usr/lib/iortcw/main/cgame.mp.$(RTCW_ARCH).so
+file path=usr/lib/iortcw/main/cgame.sp.$(RTCW_ARCH).so
+file path=usr/lib/iortcw/main/qagame.mp.$(RTCW_ARCH).so
+file path=usr/lib/iortcw/main/qagame.sp.$(RTCW_ARCH).so
+file path=usr/lib/iortcw/main/ui.mp.$(RTCW_ARCH).so
+file path=usr/lib/iortcw/main/ui.sp.$(RTCW_ARCH).so
+file path=usr/lib/iortcw/renderer_mp_opengl1_$(RTCW_ARCH).so
+file path=usr/lib/iortcw/renderer_mp_rend2_$(RTCW_ARCH).so
+file path=usr/lib/iortcw/renderer_sp_opengl1_$(RTCW_ARCH).so
+file path=usr/lib/iortcw/renderer_sp_rend2_$(RTCW_ARCH).so
 file path=usr/share/applications/iortcw-mp.desktop
 file path=usr/share/applications/iortcw-sp.desktop
 file path=usr/share/icons/hicolor/128x128/apps/iortcw-mp.png
