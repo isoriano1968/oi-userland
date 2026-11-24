@@ -1,0 +1,50 @@
+botlib on strict-alignment CPUs (SP and MP): AAS_ParseBSPEntities() packs
+all entity key/value pairs into one hunk buffer, each bsp_epair_t (three
+pointers) right after the previous pair's strings. So most epairs start at
+an odd address, and the first store into one (epair->next) traps on SPARC:
+SIGBUS (FLTACCESS, stx to ...805) in AAS_ParseBSPEntities during "Map
+Loading", on every map. Pad the offset to pointer alignment before each
+epair, the same way when sizing the buffer and when filling it, so both
+stay in step. x86 only gets the (harmless) padding.
+
+Upstream: not submitted yet; no issue or pull request about it at
+https://github.com/iortcw/iortcw (checked 2026-11-24).
+
+--- iortcw-438e7d413b5f7277187c35b032eb0ef9093ae778/SP/code/botlib/be_aas_bspq3.c.orig
++++ iortcw-438e7d413b5f7277187c35b032eb0ef9093ae778/SP/code/botlib/be_aas_bspq3.c
+@@ -414,6 +414,8 @@
+ 			if ( !strcmp( token.string, "}" ) ) {
+ 				break;
+ 			}
++			// each epair after the previous strings: keep its pointers aligned
++			bufsize = PAD( bufsize, (int) sizeof( void * ) );
+ 			bufsize += sizeof( bsp_epair_t );
+ 			if ( token.type != TT_STRING ) {
+ 				ScriptError( script, "invalid %s", token.string );
+@@ -462,6 +464,7 @@
+ 			if ( !strcmp( token.string, "}" ) ) {
+ 				break;
+ 			}
++			buftrav = buffer + PAD( (int) ( buftrav - buffer ), (int) sizeof( void * ) );
+ 			epair = (bsp_epair_t *) buftrav; buftrav += sizeof( bsp_epair_t );
+ 			epair->next = ent->epairs;
+ 			ent->epairs = epair;
+--- iortcw-438e7d413b5f7277187c35b032eb0ef9093ae778/MP/code/botlib/be_aas_bspq3.c.orig
++++ iortcw-438e7d413b5f7277187c35b032eb0ef9093ae778/MP/code/botlib/be_aas_bspq3.c
+@@ -414,6 +414,8 @@
+ 			if ( !strcmp( token.string, "}" ) ) {
+ 				break;
+ 			}
++			// each epair after the previous strings: keep its pointers aligned
++			bufsize = PAD( bufsize, (int) sizeof( void * ) );
+ 			bufsize += sizeof( bsp_epair_t );
+ 			if ( token.type != TT_STRING ) {
+ 				ScriptError( script, "invalid %s", token.string );
+@@ -462,6 +464,7 @@
+ 			if ( !strcmp( token.string, "}" ) ) {
+ 				break;
+ 			}
++			buftrav = buffer + PAD( (int) ( buftrav - buffer ), (int) sizeof( void * ) );
+ 			epair = (bsp_epair_t *) buftrav; buftrav += sizeof( bsp_epair_t );
+ 			epair->next = ent->epairs;
+ 			ent->epairs = epair;

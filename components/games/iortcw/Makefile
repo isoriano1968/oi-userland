@@ -26,7 +26,7 @@ COMPONENT_GIT_HASH=	438e7d413b5f7277187c35b032eb0ef9093ae778
 
 COMPONENT_NAME=		iortcw
 COMPONENT_VERSION=	1.51.20240526
-COMPONENT_REVISION=	2
+COMPONENT_REVISION=	3
 COMPONENT_SUMMARY=	Return to Castle Wolfenstein engines, SP and MP (game data not included)
 COMPONENT_PROJECT_URL=	https://github.com/iortcw/iortcw
 COMPONENT_FMRI=		games/iortcw
