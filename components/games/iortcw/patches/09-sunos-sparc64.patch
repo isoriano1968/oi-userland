@@ -8,6 +8,11 @@ FILE_ARCH. The SPARC VM compiler, vm_sparc.c, is built only for ARCH=sparc;
 with patches 06 and 07 it works for the 64-bit ABI as well, so build it and
 set HAVE_VM_COMPILED for sparc64 too.
 
+-mv8plus selects the 32-bit V8+ ABI; the sparc64 blocks pass it with -m64
+as well, where it has no meaning and makes gcc 13 fail with an internal
+compiler error (extract_insn, UNSPEC_MOVE_PIC, tr_image_pcx.c with -fPIC).
+Keep -mcpu=v9 -mtune=v9 for sparc64 and -mv8plus for 32-bit sparc only.
+
 Upstream: not submitted yet; no issue or pull request about it at
 https://github.com/iortcw/iortcw (checked 2026-11-24).
 
@@ -24,6 +29,33 @@ https://github.com/iortcw/iortcw (checked 2026-11-24).
  ifeq ($(COMPILE_ARCH),powerpc)
    COMPILE_ARCH=ppc
  endif
+@@ -393,7 +397,7 @@
+     OPTIMIZE = $(OPTIMIZEVM) -ffast-math
+   endif
+   ifeq ($(ARCH),sparc64)
+-    OPTIMIZEVM += -mcpu=v9 -mtune=v9 -mv8plus
++    OPTIMIZEVM += -mcpu=v9 -mtune=v9
+     OPTIMIZE = $(OPTIMIZEVM) -ffast-math
+   endif
+   ifeq ($(ARCH),alpha)
+@@ -882,7 +886,7 @@
+     OPTIMIZE = $(OPTIMIZEVM) -ffast-math
+   endif
+   ifeq ($(ARCH),sparc64)
+-    OPTIMIZEVM += -mcpu=v9 -mtune=v9 -mv8plus
++    OPTIMIZEVM += -mcpu=v9 -mtune=v9
+     OPTIMIZE = $(OPTIMIZEVM) -ffast-math
+   endif
+   ifeq ($(ARCH),alpha)
+@@ -1005,7 +1009,7 @@
+     OPTIMIZE = $(OPTIMIZEVM) -ffast-math
+   endif
+   ifeq ($(ARCH),sparc64)
+-    OPTIMIZEVM += -mcpu=v9 -mtune=v9 -mv8plus
++    OPTIMIZEVM += -mcpu=v9 -mtune=v9
+     OPTIMIZE = $(OPTIMIZEVM) -ffast-math
+   endif
+   ifeq ($(ARCH),x86_64)
 @@ -1090,7 +1094,7 @@
    HAVE_VM_COMPILED=false
  endif
@@ -75,6 +107,33 @@ https://github.com/iortcw/iortcw (checked 2026-11-24).
  ifeq ($(COMPILE_ARCH),powerpc)
    COMPILE_ARCH=ppc
  endif
+@@ -404,7 +408,7 @@
+     OPTIMIZE = $(OPTIMIZEVM) -ffast-math
+   endif
+   ifeq ($(ARCH),sparc64)
+-    OPTIMIZEVM += -mcpu=v9 -mtune=v9 -mv8plus
++    OPTIMIZEVM += -mcpu=v9 -mtune=v9
+     OPTIMIZE = $(OPTIMIZEVM) -ffast-math
+   endif
+   ifeq ($(ARCH),alpha)
+@@ -893,7 +897,7 @@
+     OPTIMIZE = $(OPTIMIZEVM) -ffast-math
+   endif
+   ifeq ($(ARCH),sparc64)
+-    OPTIMIZEVM += -mcpu=v9 -mtune=v9 -mv8plus
++    OPTIMIZEVM += -mcpu=v9 -mtune=v9
+     OPTIMIZE = $(OPTIMIZEVM) -ffast-math
+   endif
+   ifeq ($(ARCH),alpha)
+@@ -1016,7 +1020,7 @@
+     OPTIMIZE = $(OPTIMIZEVM) -ffast-math
+   endif
+   ifeq ($(ARCH),sparc64)
+-    OPTIMIZEVM += -mcpu=v9 -mtune=v9 -mv8plus
++    OPTIMIZEVM += -mcpu=v9 -mtune=v9
+     OPTIMIZE = $(OPTIMIZEVM) -ffast-math
+   endif
+   ifeq ($(ARCH),x86_64)
 @@ -1101,7 +1105,7 @@
    HAVE_VM_COMPILED=false
  endif
