@@ -55,7 +55,7 @@ file path=etc/ConsoleKit/sessions.d/MultiDCU1.session
 file path=etc/ConsoleKit/sessions.d/MultiDCU2.session
 file path=etc/ConsoleKit/sessions.d/MultiDCU3.session
 file path=etc/ConsoleKit/sessions.d/Remote.session
-file path=etc/dbus-1/system.d/ConsoleKit.conf
+file path=etc/dbus-1/system.d/ConsoleKit.conf refresh_fmri=svc:/system/dbus:default
 file path=usr/bin/ck-history
 file path=usr/bin/ck-launch-session
 file path=usr/bin/ck-list-sessions

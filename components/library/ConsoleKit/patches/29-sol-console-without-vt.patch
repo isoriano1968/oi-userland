@@ -11,7 +11,9 @@ failed: "Server is already active for display 0"), kept that display for
 the login window, and after the user logged out the request for a new
 greeter hit it ("Got console request to add display for session that
 already has a display, and display is already in use"): no greeter came
-back. The user session also stayed inactive.
+back. The user session also stayed inactive. On a Sun T4-2 (sun4v) the
+same VT_GETSTATE failure made console-kit-daemon exit at start, so
+ConsoleKit and upower went into maintenance.
 
 Treat EINVAL/ENOTTY/ENXIO from VT_GETSTATE like the build without VT
 support already does: VT 1, i.e. /dev/console, is active. Systems with VTs
