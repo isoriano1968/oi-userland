@@ -1,0 +1,42 @@
+qcommon: pass vmMain arguments as an array on all but 32-bit x86
+
+VM_Call() hands the interpreter and the compiled VM a pointer to callnum,
+(int *)&callnum, on id386 and idsparc, assuming that the variadic int
+arguments follow callnum in memory as 32-bit slots. On 32-bit SPARC gcc
+spills the register arguments of a variadic function to consecutive
+words, so this happened to work. On 64-bit SPARC (sparcv9, idsparc as
+well) arguments occupy 8-byte slots, and the QVM receives garbage:
+"UI_SetActiveMenu: bad enum" in the UI, with the interpreter (vm_ui 1)
+and the sparc compiler (vm_ui 2) alike.
+
+Copy the arguments into the int array as on every other platform; keep
+the shortcut for 32-bit x86 only, where the cdecl stack layout guarantees
+it. The array path already serves PPC, x86_64 and the rest.
+
+Same fix as ioquake3 (ioq3 has the same code); for SP and MP.
+vm_* 1 and 2; x86_64 builds take the same path as before.
+
+Upstream: not submitted yet (patch prepared for github.com/ioquake/ioq3).
+
+--- iortcw-438e7d413b5f7277187c35b032eb0ef9093ae778/SP/code/qcommon/vm.c.orig
++++ iortcw-438e7d413b5f7277187c35b032eb0ef9093ae778/SP/code/qcommon/vm.c
+@@ -852,7 +852,7 @@
+                             args[4],  args[5],  args[6], args[7],
+                             args[8],  args[9], args[10], args[11]);
+ 	} else {
+-#if ( id386 || idsparc ) && !defined __clang__ // calling convention doesn't need conversion in some cases
++#if id386 && !defined __clang__ // calling convention doesn't need conversion in some cases
+ #ifndef NO_VM_COMPILED
+ 		if ( vm->compiled )
+ 			r = VM_CallCompiled( vm, (int*)&callnum );
+--- iortcw-438e7d413b5f7277187c35b032eb0ef9093ae778/MP/code/qcommon/vm.c.orig
++++ iortcw-438e7d413b5f7277187c35b032eb0ef9093ae778/MP/code/qcommon/vm.c
+@@ -875,7 +875,7 @@
+                             args[4],  args[5],  args[6], args[7],
+                             args[8],  args[9], args[10], args[11]);
+ 	} else {
+-#if ( id386 || idsparc ) && !defined __clang__ // calling convention doesn't need conversion in some cases
++#if id386 && !defined __clang__ // calling convention doesn't need conversion in some cases
+ #ifndef NO_VM_COMPILED
+ 		if ( vm->compiled )
+ 			r = VM_CallCompiled( vm, (int*)&callnum );
