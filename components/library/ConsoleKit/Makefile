@@ -17,11 +17,15 @@ BUILD_STYLE= configure
 # 32 bit needs to be build first because we remove the contents of $(USRLIBEXECDIR) in COMPONENT_POST_INSTALL_ACTION.32
 BUILD_BITS= 32_and_64
 PREFERRED_BITS= 64
+ifeq ($(shell uname -p),sparc)
+# OpenIndiana SPARC: gcc 13 is its newest.
+GCC_VERSION = 13
+endif
 include ../../../make-rules/shared-macros.mk
 
 COMPONENT_NAME=         ConsoleKit
 COMPONENT_VERSION=      0.4.6
-COMPONENT_REVISION=     1
+COMPONENT_REVISION=     2
 COMPONENT_PROJECT_URL=  https://www.freedesktop.org/wiki/Software/ConsoleKit
 COMPONENT_SUMMARY=      Framework for tracking users, login sessions, and seats
 COMPONENT_SRC=          $(COMPONENT_NAME)-$(COMPONENT_VERSION)

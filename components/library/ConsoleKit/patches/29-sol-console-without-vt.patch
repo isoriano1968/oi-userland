@@ -1,0 +1,57 @@
+ck-sysdeps-solaris: a console without virtual terminals has VT 1 active
+
+On a system whose console does not support VTs (the OBP console on SPARC,
+e.g. an Ultra 45 with an XVR-300), VT_GETSTATE on /dev/vt/active fails
+with EINVAL. ck_get_active_console_num() then reported VT 0, which maps to
+/dev/vt/0, a device no session uses. So when a user session was added to
+the static seat, no session was found on the active console and
+find_possible_session_to_activate() requested the seat's LoginWindow
+session again: GDM started a second X server on the display in use (it
+failed: "Server is already active for display 0"), kept that display for
+the login window, and after the user logged out the request for a new
+greeter hit it ("Got console request to add display for session that
+already has a display, and display is already in use"): no greeter came
+back. The user session also stayed inactive.
+
+Treat EINVAL/ENOTTY/ENXIO from VT_GETSTATE like the build without VT
+support already does: VT 1, i.e. /dev/console, is active. Systems with VTs
+(x86 with the framebuffer console) are not affected: VT_GETSTATE succeeds
+there. handle_vt_active() no longer compares an uninitialised number when
+VT_GETSTATE fails.
+
+Upstream: ConsoleKit is no longer maintained (last release 0.4.6); the
+Solaris code is OpenIndiana's (patches 01-28).
+
+--- ConsoleKit-0.4.6/src/ck-sysdeps-solaris.c.orig
++++ ConsoleKit-0.4.6/src/ck-sysdeps-solaris.c
+@@ -496,6 +496,20 @@
+ 
+         res = ioctl (console_fd, VT_GETSTATE, &stat);
+         if (res == ERROR) {
++                if (errno == EINVAL || errno == ENOTTY || errno == ENXIO) {
++                        /*
++                         * The console has no virtual terminals (e.g. the
++                         * OBP console on SPARC): as without VT support,
++                         * VT 1 = "/dev/console" is the active one.
++                         * Reporting 0 instead matched no session, so
++                         * every login requested a second login window
++                         * on the display already in use.
++                         */
++                        g_debug ("Console without VTs, using /dev/console");
++                        active = 1;
++                        ret = TRUE;
++                        goto out;
++                }
+                 perror ("ioctl VT_GETSTATE");
+                 goto out;
+         }
+--- ConsoleKit-0.4.6/src/ck-vt-monitor.c.orig
++++ ConsoleKit-0.4.6/src/ck-vt-monitor.c
+@@ -186,6 +186,7 @@
+                 num = state.v_active;
+         } else {
+                 g_debug ("Fails to ioctl VT_GETSTATE");
++                num = vt_monitor->priv->active_num;
+         }
+ 
+         if (vt_monitor->priv->active_num != num) {
