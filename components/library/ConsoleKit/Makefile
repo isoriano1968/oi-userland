@@ -87,4 +87,5 @@ REQUIRED_PACKAGES += system/library
 REQUIRED_PACKAGES += system/library/dbus
 REQUIRED_PACKAGES += system/library/libdbus
 REQUIRED_PACKAGES += system/library/libdbus-glib
+REQUIRED_PACKAGES += system/library/libdbus/32
 REQUIRED_PACKAGES += x11/library/libx11

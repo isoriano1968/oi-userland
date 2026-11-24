@@ -1,0 +1,29 @@
+Solaris code: types for gcc 14
+
+- ck-sysdeps-solaris: get_system_vt_major() declared its cache without a
+  type (-Werror=implicit-int).
+- ck-vt-monitor: handle_vt_active() is a SIGPOLL handler and takes the
+  signal number (-Werror=incompatible-pointer-types).
+
+--- ConsoleKit-0.4.6/src/ck-sysdeps-solaris.c.orig
++++ ConsoleKit-0.4.6/src/ck-sysdeps-solaris.c
+@@ -130,7 +130,7 @@
+ static int
+ get_system_vt_major ()
+ {
+-        static      ret = -1;
++        static int  ret = -1;
+         struct stat st;
+         int         res;
+ 
+--- ConsoleKit-0.4.6/src/ck-vt-monitor.c.orig
++++ ConsoleKit-0.4.6/src/ck-vt-monitor.c
+@@ -164,7 +164,7 @@
+ 
+ #if defined (__sun) && defined (HAVE_SYS_VT_H)
+ static void
+-handle_vt_active (void)
++handle_vt_active (int sig)
+ {
+         struct vt_stat state;
+         guint          num;
