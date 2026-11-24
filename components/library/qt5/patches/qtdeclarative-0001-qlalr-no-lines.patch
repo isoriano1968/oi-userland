@@ -1,0 +1,27 @@
+qtdeclarative: generate the QML parser without #line directives
+
+qlalr writes a #line directive with the absolute path of the grammar,
+qqmljs.g in the build tree, before every action it copies. One of the
+generated files, qqmljsparser_p.h, is installed as a private header, so
+the package delivered the build host's workspace path (seven times, as
+/jenkins/jobs/oi-userland/workspace/... in OpenIndiana's own 5.15.18
+revision 0). qlalr's --no-lines leaves them out; the generated code is
+the same, and compiler messages name the generated file instead of
+qqmljs.g.
+
+Upstream: Qt 5.15 and Qt 6 (qt_process_qlalr with --no-debug --qt
+--exit-on-warn, src/qml/CMakeLists.txt at
+https://github.com/qt/qtdeclarative/blob/dev/src/qml/CMakeLists.txt) pass
+no --no-lines; not submitted (2026-11-25).
+
+--- qt-everywhere-src-5.15.18/qtdeclarative/src/qml/parser/parser.pri.orig
++++ qt-everywhere-src-5.15.18/qtdeclarative/src/qml/parser/parser.pri
+@@ -15,7 +15,7 @@
+ 
+ CONFIG += qlalr
+ QLALRSOURCES = $$PWD/qqmljs.g
+-QMAKE_QLALRFLAGS = --no-debug --qt
++QMAKE_QLALRFLAGS = --no-debug --qt --no-lines
+ 
+ OTHER_FILES += $$QLALRSOURCES
+ 

@@ -26,7 +26,7 @@ include ../../../make-rules/shared-macros.mk
 COMPONENT_NAME=			qt
 COMPONENT_VERSION_MJR=	5.15
 COMPONENT_VERSION=		$(COMPONENT_VERSION_MJR).18
-COMPONENT_REVISION=		1
+COMPONENT_REVISION=		2
 COMPONENT_SUMMARY=		Qt cross-platform application and UI framework
 COMPONENT_PROJECT_URL=	https://www.qt.io/
 COMPONENT_SRC=			$(COMPONENT_NAME)-everywhere-src-$(COMPONENT_VERSION)
@@ -73,6 +73,19 @@ CONFIGURE_OPTIONS += -plugin-sql-mysql
 CONFIGURE_OPTIONS += -plugin-sql-psql
 CONFIGURE_OPTIONS += -plugin-sql-sqlite
 CONFIGURE_OPTIONS += -system-sqlite
+# Qt 5 compiles take no CFLAGS or CXXFLAGS from the environment, so the
+# make-rules' build path maps (if any) are handed to it here: no build
+# host path in __FILE__ or debug info.
+ifneq ($(strip $(gcc_PATH_MAP)),)
+CONFIGURE_OPTIONS += "QMAKE_CFLAGS+=$(gcc_PATH_MAP)"
+CONFIGURE_OPTIONS += "QMAKE_CXXFLAGS+=$(gcc_PATH_MAP)"
+# configure builds qmake itself with its own Makefile (qmake/Makefile.unix),
+# which takes the mkspec's flags only, and EXTRA_CPPFLAGS from the
+# environment (configure sets EXTRA_CXXFLAGS itself, so not that one); the
+# build rebuilds qmake with that Makefile (make binary), so both need it.
+CONFIGURE_ENV += EXTRA_CPPFLAGS="$(gcc_PATH_MAP)"
+COMPONENT_BUILD_ENV += EXTRA_CPPFLAGS="$(gcc_PATH_MAP)"
+endif
 #CONFIGURE_OPTIONS += -tiff
 #CONFIGURE_OPTIONS += -syslog
 #CONFIGURE_OPTIONS += -pcre
@@ -107,7 +120,22 @@ COMPONENT_POST_INSTALL_ACTION= ( \
 	$(PROTO_DIR)$(QT_EGLDIR)/libqeglfs-kms-egldevice-integration.so; \
 /usr/bin/elfedit -e 'dyn:runpath "$(GCC_LIBDIR):$(QT_LIBDIR)"' \
 	$(PROTO_DIR)$(QT_LIBDIR)/libQt5EglFsKmsSupport.so.$(COMPONENT_VERSION); \
+$(QT_NEUTRAL_INSTALL) \
 )
+
+# The installed files name no build directory: qmake records each library's
+# build directory in its .prl (QMAKE_PRL_BUILD_DIR, only used inside the build
+# tree; Debian's Qt packages delete it too), and configure records the
+# build-only path maps above in qmodule.pri, from where they would reach
+# every module built against this Qt.
+QT_NEUTRAL_INSTALL = \
+	$(GSED) -i -e '/^QMAKE_PRL_BUILD_DIR = /d' \
+		$(PROTO_DIR)$(QT_LIBDIR)/*.prl;
+ifneq ($(strip $(gcc_PATH_MAP)),)
+QT_NEUTRAL_INSTALL += \
+	$(GSED) -i -e '/^!host_build|!cross_compile {$$/{N;N;N;/^[^\n]*\n *QMAKE_CFLAGS+=-ffile-prefix-map=[^\n]*\n *QMAKE_CXXFLAGS+=-ffile-prefix-map=[^\n]*\n}$$/d;}' \
+		$(PROTO_DIR)$(QT_PREFIX)/mkspecs/qmodule.pri;
+endif
 
 # Build dependencies
 REQUIRED_PACKAGES += $(CLANG_DEVELOPER_PKG)
