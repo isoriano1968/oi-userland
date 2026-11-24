@@ -109,6 +109,8 @@ CONFIGURE_OPTIONS += --without-tcp-wrappers
 CONFIGURE_ENV += XGETTEXT=/usr/gnu/bin/xgettext
 
 # Auto-generated dependencies
+# yelp.m4 for the docs (gdm-44-yelp-port)
+REQUIRED_PACKAGES += library/gnome/yelp-tools
 REQUIRED_PACKAGES += gnome/config/gconf
 REQUIRED_PACKAGES += gnome/gnome-session-2
 REQUIRED_PACKAGES += library/desktop/cairo
