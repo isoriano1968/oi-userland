@@ -17,11 +17,16 @@
 #
 
 USE_PARALLEL_BUILD= yes
+ifeq ($(shell uname -p),sparc)
+# OpenIndiana SPARC: gcc 13 is its newest.
+GCC_VERSION = 13
+endif
 include ../../../make-rules/shared-macros.mk
 
 COMPONENT_NAME=			qt
 COMPONENT_VERSION_MJR=	5.15
 COMPONENT_VERSION=		$(COMPONENT_VERSION_MJR).18
+COMPONENT_REVISION=		1
 COMPONENT_SUMMARY=		Qt cross-platform application and UI framework
 COMPONENT_PROJECT_URL=	https://www.qt.io/
 COMPONENT_SRC=			$(COMPONENT_NAME)-everywhere-src-$(COMPONENT_VERSION)
