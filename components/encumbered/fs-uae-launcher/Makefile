@@ -10,14 +10,20 @@
 #
 
 #
-# Copyright 2026 Ignacio Soriano
+# emulators/fs-uae-launcher -- the FS-UAE Launcher (Python 3, PyQt5), next
+# to oi-userland's encumbered/fs-uae (emulators/fs-uae), the emulator it
+# drives.  A Solaris 11.4 port of the same version is kept in step with it.
+#
+# Pure Python.  Upstream's own Makefile does the work: "mo" builds the
+# message catalogs, "install" runs setup.py (distutils) into
+# $(prefix)/share/fs-uae-launcher and links $(prefix)/bin/fs-uae-launcher to
+# it.  It calls python3, which is 3.9 on OpenIndiana -- the only Python with
+# PyQt5 here (library/python/pyqt5-39), so the launcher is a 3.9 package.
+# 3.2.35 prefers PyQt6 and falls back to PyQt5; it imports PyOpenGL at
+# startup (packages/python/PyOpenGL, with an illumos libGL fix).  It no
+# longer uses pkg_resources, so the 3.1.70 patch is gone.
 #
 
-# FS-UAE Launcher is a standalone Python application (PyQt5), not a module:
-# upstream installs it into $(prefix)/share/fs-uae-launcher (setup.py refuses
-# the default site-packages) and links $(prefix)/bin/fs-uae-launcher to it.
-# Its own Makefile does that, so this uses justmake: "mo" builds the message
-# catalogs, "install" runs setup.py.
 BUILD_BITS =		NO_ARCH
 BUILD_STYLE =		justmake
 
@@ -25,7 +31,13 @@ include ../../../make-rules/shared-macros.mk
 
 COMPONENT_NAME =	fs-uae-launcher
 COMPONENT_VERSION =	3.2.35
-COMPONENT_SUMMARY =	FS-UAE Launcher, the graphical front end of FS-UAE
+ifeq ($(MACH),sparc)
+# SPARC only: the first SPARC build (2026-11-23) had the build host's home
+# path in its files; rebuilt with neutral paths as the next revision (x86 is
+# unchanged)
+COMPONENT_REVISION=	1
+endif
+COMPONENT_SUMMARY =	FS-UAE Launcher, the configuration front end of FS-UAE
 COMPONENT_PROJECT_URL =	https://fs-uae.net/
 COMPONENT_FMRI =	emulators/fs-uae-launcher
 COMPONENT_CLASSIFICATION = Applications/System Utilities
@@ -36,30 +48,33 @@ COMPONENT_ARCHIVE_HASH = sha256:cdfd74cd99281931a904340d414c7ebc44ddbdd0d0d599b3
 COMPONENT_LICENSE =	GPLv2
 COMPONENT_LICENSE_FILE = fs-uae-launcher.license
 
-TEST_TARGET =		$(NO_TESTS)
-
 include $(WS_MAKE_RULES)/encumbered.mk
 include $(WS_MAKE_RULES)/common.mk
 
 PATH =			$(PATH.gnu)
 
-# A real copy of the source tree, not a symlink farm: upstream's
+# A real copy of the source tree, not cloney's symlink farm: upstream's
 # install-data does "cp -a share/*", which would deliver the symlinks.
 CLONEY_MODE =		copy
 
+# Upstream's Makefile: "mo" to build, "install" with DESTDIR and prefix.
 COMPONENT_BUILD_TARGETS = mo
 COMPONENT_INSTALL_TARGETS = install
 COMPONENT_INSTALL_ARGS += prefix=$(USRDIR)
 
-# setup.py writes "#!/usr/bin/python3" into the launcher script.  pkgdepend
-# refuses an executable Python script without a version, and PyQt5 exists
-# for Python 3.9 only, so pin it to the interpreter the package needs.
+# setup.py writes "#!/usr/bin/python3" into the launcher script; pkgdepend
+# refuses an executable Python script that names no version, and the
+# package is a Python 3.9 one (PyQt5 exists only for 3.9 here).
 COMPONENT_POST_INSTALL_ACTION += \
 	$(GSED) -i '1s|^\#!/usr/bin/python3$$|\#!/usr/bin/python3.9|' \
 		$(PROTO_DIR)$(USRSHAREDIR)/fs-uae-launcher/fs-uae-launcher
 
-# PyOpenGL, PyQt5 and requests are needed at run time only; the manifest
-# names them.
+TEST_TARGET =		$(NO_TESTS)
+
+# PyOpenGL, PyQt5 and requests are needed only at run time; the manifest
+# names them with explicit depend actions (pyopengl-39 and requests-39 are
+# not needed to build, so they are not listed here, where prep would install
+# them).
 REQUIRED_PACKAGES += library/python/pyqt5-39
 REQUIRED_PACKAGES += runtime/python-39
 REQUIRED_PACKAGES += text/gnu-gettext

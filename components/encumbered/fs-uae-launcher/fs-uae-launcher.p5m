@@ -10,12 +10,14 @@
 #
 
 #
-# Copyright 2026 Ignacio Soriano
+# emulators/fs-uae-launcher.  The file list is generated from the proto area
+# (pkgsend generate); compiled __pycache__ files for Python 3.9 included, as
+# upstream's setup.py install makes them.
 #
-
 set name=pkg.fmri value=pkg:/$(COMPONENT_FMRI)@$(IPS_COMPONENT_VERSION),$(BUILD_VERSION)
-set name=pkg.human-version value=$(HUMAN_VERSION)
 set name=pkg.summary value="$(COMPONENT_SUMMARY)"
+set name=pkg.description \
+    value="FS-UAE Launcher is the graphical front end of the FS-UAE Amiga emulator: it builds the emulator configuration (models, Kickstart ROMs, floppies, hard drives, joysticks) and starts fs-uae with it.  Python 3.9 with PyQt5."
 set name=info.classification value="$(COMPONENT_CLASSIFICATION)"
 set name=info.upstream-url value=$(COMPONENT_PROJECT_URL)
 set name=info.source-url value=$(COMPONENT_ARCHIVE_URL)
@@ -23,16 +25,14 @@ set name=org.opensolaris.consolidation value=$(CONSOLIDATION)
 
 license $(COMPONENT_LICENSE_FILE) license='$(COMPONENT_LICENSE)'
 
-# The launcher runs on Python 3.9 with PyQt5 (the only Python with PyQt5;
-# it prefers PyQt6 and falls back to PyQt5).  It imports PyOpenGL at
-# startup; requests is for its online features.  These are run-time
-# dependencies that pkgdepend cannot find (see the launcher script below).
+# Needed at run time only: Qt5 through PyQt5 (3.2.35 prefers PyQt6 and falls
+# back to PyQt5), PyOpenGL (imported at startup), requests for the online
+# features.  fs-uae itself is optional: OpenIndiana publishes it only in
+# hipster-encumbered, and the launcher also finds a fs-uae in PATH.
 depend type=require fmri=pkg:/library/python/pyopengl-39
 depend type=require fmri=pkg:/library/python/pyqt5-39
 depend type=require fmri=pkg:/library/python/requests-39
-depend type=require fmri=pkg:/runtime/python-39
-# The emulator the launcher drives.
-depend type=require fmri=pkg:/emulators/fs-uae
+depend type=optional fmri=pkg:/emulators/fs-uae
 
 link path=usr/bin/fs-uae-launcher \
     target=../share/fs-uae-launcher/fs-uae-launcher
