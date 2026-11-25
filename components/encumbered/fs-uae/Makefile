@@ -13,11 +13,26 @@
 # Copyright 2022 Till Wegmueller
 #
 
+# OpenIndiana project: the same as OpenIndiana/oi-userland#28320 (branch
+# fs-uae-3.2.35, notes/oi-userland-pr-fs-uae.md): 3.2.35 with the 68k JIT
+# compiler on.  patches/illumos-build.patch is FrodeSolheim/fs-uae#397
+# (configure finds libsocket/libnsl, <sys/regset.h> for the JIT, ...);
+# patches/serial-select-nfds.patch is FrodeSolheim/fs-uae#396: select(fd + 1)
+# instead of select(FD_SETSIZE = 65536) once per scanline in readseravail(),
+# 12% faster with the JIT on the iMac (tools/fsuae-bench, 2026-11-09).
+# Published to the amix repository next to emulators/fs-uae-launcher.
+
 USE_PARALLEL_BUILD=	yes
 include ../../../make-rules/shared-macros.mk
 
 COMPONENT_NAME=		fs-uae
 COMPONENT_VERSION=	3.2.35
+ifeq ($(MACH),sparc)
+# SPARC only: the first SPARC build (2026-11-23) had the build host's home
+# path in its files; rebuilt with neutral paths as the next revision (x86 is
+# unchanged)
+COMPONENT_REVISION=	1
+endif
 COMPONENT_SUMMARY=	Accurate Amiga Emulation
 COMPONENT_PROJECT_URL=	https://fs-uae.net/
 COMPONENT_FMRI=		emulators/$(COMPONENT_NAME)
@@ -38,7 +53,13 @@ COMPONENT_PREP_ACTION += ( cd $(@D) && PATH="$(PATH)" $(AUTORECONF) -fi ) ;
 
 # The 68k JIT compiler (x86-64); patches/illumos-build.patch makes it build
 # on illumos.
-CONFIGURE_OPTIONS += --enable-jit
+# The 68k JIT compiler exists for x86 only (configure.ac refuses
+# --enable-jit elsewhere); on SPARC FS-UAE runs the interpreter, and
+# patches/no-jit-warning.patch makes a configuration that asks for the JIT
+# say so and carry on.
+CONFIGURE_OPTIONS.i386 += --enable-jit
+CONFIGURE_OPTIONS.sparc += --disable-jit
+CONFIGURE_OPTIONS += $(CONFIGURE_OPTIONS.$(MACH))
 
 # Auto-generated dependencies
 REQUIRED_PACKAGES += $(GCC_RUNTIME_PKG)

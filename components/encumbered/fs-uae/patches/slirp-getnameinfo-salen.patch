@@ -1,0 +1,29 @@
+slirp: pass getnameinfo() the address's own length.
+
+illumos (like the BSDs) rejects a sockaddr_storage-sized length for an
+AF_INET address (EAI_FAIL), and tcp_connect() then aborted FS-UAE on
+g_assert(ret == 0) as soon as a forwarded host port was connected to.
+libslirp upstream uses sockaddr_size() here as well.
+
+--- fs-uae-3.2.35/slirp/src/tcp_subr.c	2025-09-07 13:20:23.000000000 +0200
++++ fs-uae-3.2.35/slirp/src/tcp_subr.c	2026-11-15 15:35:22.203425122 +0100
+@@ -473,7 +473,7 @@
+ 
+     DEBUG_CALL("tcp_connect");
+     DEBUG_ARG("inso = %p", inso);
+-    ret = getnameinfo((const struct sockaddr *) &inso->lhost.ss, sizeof(inso->lhost.ss), addrstr, sizeof(addrstr), portstr, sizeof(portstr), NI_NUMERICHOST|NI_NUMERICSERV);
++    ret = getnameinfo((const struct sockaddr *) &inso->lhost.ss, sockaddr_size(&inso->lhost.ss), addrstr, sizeof(addrstr), portstr, sizeof(portstr), NI_NUMERICHOST|NI_NUMERICSERV);
+     g_assert(ret == 0);
+     DEBUG_ARG("ip = [%s]:%s", addrstr, portstr);
+     DEBUG_ARG("so_state = 0x%x", inso->so_state);
+--- fs-uae-3.2.35/slirp/src/socket.c	2025-09-07 13:20:23.000000000 +0200
++++ fs-uae-3.2.35/slirp/src/socket.c	2026-11-15 15:35:22.203425122 +0100
+@@ -1088,7 +1088,7 @@
+             }
+             so->so_laddr6 = slirp->ndp_table.guest_in6_addr;
+             ret = getnameinfo((const struct sockaddr *) &so->lhost.ss,
+-                              sizeof(so->lhost.ss), addrstr, sizeof(addrstr),
++                              sockaddr_size(&so->lhost.ss), addrstr, sizeof(addrstr),
+                               portstr, sizeof(portstr),
+                               NI_NUMERICHOST|NI_NUMERICSERV);
+             g_assert(ret == 0);

@@ -1,0 +1,37 @@
+Forward host ports to the guest with the new (lib)slirp.
+
+uae_slirp_redir() was empty for WITH_NEW_SLIRP, so slirp_redir and
+slirp_ports did nothing and nothing on the host could connect into the
+emulated machine.  It now calls slirp_add_hostfwd() on 127.0.0.1.
+
+--- fs-uae-3.2.35/src/slirp_uae.cpp	2026-11-15 15:11:51.232865274 +0100
++++ fs-uae-3.2.35/src/slirp_uae.cpp	2026-11-15 15:11:51.264865542 +0100
+@@ -530,6 +530,28 @@
+ 		    int guest_port)
+ {
+ #ifdef WITH_NEW_SLIRP
++	/* slirp_redir / slirp_ports: forward a port of the host to the guest
++	 * with libslirp's hostfwd, on the host's loopback address only, so
++	 * the guest's services are not offered to the network.  A guest
++	 * address that was not given (0 or INADDR_NONE) is slirp's DHCP
++	 * guest, 10.0.2.15. */
++	struct in_addr host_addr;
++	char gbuf[INET_ADDRSTRLEN];
++	if (slirp == NULL)
++		return -1;
++	if (guest_addr.s_addr == 0 || guest_addr.s_addr == INADDR_NONE)
++		inet_pton(AF_INET, "10.0.2.15", &guest_addr);
++	inet_pton(AF_INET, "127.0.0.1", &host_addr);
++	inet_ntop(AF_INET, &guest_addr, gbuf, sizeof(gbuf));
++	if (slirp_add_hostfwd(slirp, is_udp, host_addr, host_port,
++	    guest_addr, guest_port) < 0) {
++		uae_slirp_log("hostfwd %s 127.0.0.1:%d -> %s:%d failed\n",
++		    is_udp ? "udp" : "tcp", host_port, gbuf, guest_port);
++		return -1;
++	}
++	uae_slirp_log("hostfwd %s 127.0.0.1:%d -> %s:%d\n",
++	    is_udp ? "udp" : "tcp", host_port, gbuf, guest_port);
++	return 1;
+ #else
+ #ifdef WITH_QEMU_SLIRP
+ 	if (impl == QEMU_IMPLEMENTATION) {
